@@ -46,7 +46,7 @@ func Init(appName string, version string) {
 	flag.Parse()
 	// Show version (-v)
 	if *_showVersion {
-		fmt.Printf("%s\n", version)
+		fmt.Printf("%s\n", _version)
 		os.Exit(0)
 	}
 
@@ -54,7 +54,7 @@ func Init(appName string, version string) {
 	zerolog.TimestampFunc = func() time.Time {
 		return time.Now().In(time.Local)
 	}
-	log.Info().Msgf("[eria:Init] Starting %s %s...", appName, version)
+	log.Info().Msgf("[eria:Init] Starting %s %s...", _appName, _version)
 
 	level, err := zerolog.ParseLevel(*_logLevel)
 	if err != nil {
@@ -103,11 +103,11 @@ func WaitForSignal() {
 }
 
 // RunSingleThing lauch a server for HTTP and WS requests
-func RunSingleThing(t *thing.Thing, port uint) *producer.ExposedThing {
+func RunSingleThing(t *thing.Thing, host string, port uint) *producer.ExposedThing {
 	//	_wait.Add(1)
 	myProducer := producer.New(&_wait)
 	exposedThing := myProducer.Produce(t)
-	httpServer := protocolHttp.NewServer("127.0.0.1", port)
+	httpServer := protocolHttp.NewServer(host, port)
 	myProducer.AddServer(httpServer)
 	wsServer := protocolWebSocket.NewServer(httpServer)
 	myProducer.AddServer(wsServer)
