@@ -1,4 +1,4 @@
-package eria
+package model
 
 import (
 	"testing"
