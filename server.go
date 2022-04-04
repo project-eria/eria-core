@@ -2,6 +2,7 @@ package eria
 
 import (
 	"context"
+	"fmt"
 	"os"
 	"os/signal"
 	"sync"
@@ -17,25 +18,26 @@ import (
 )
 
 type EriaServer struct {
-	host   string
-	port   uint
-	wait   sync.WaitGroup
-	cancel context.CancelFunc
-	ctx    context.Context
-
-	things map[string]*EriaThing
+	host        string
+	port        uint
+	exposedAddr string
+	wait        sync.WaitGroup
+	cancel      context.CancelFunc
+	ctx         context.Context
+	things      map[string]*EriaThing
 	*producer.Producer
 }
 
-func NewServer(host string, port uint) *EriaServer {
+func NewServer(host string, port uint, exposedAddr string) *EriaServer {
 	ctx, cancel := context.WithCancel(context.Background())
 
 	server := &EriaServer{
-		host:   host,
-		port:   port,
-		ctx:    ctx,
-		cancel: cancel,
-		things: map[string]*EriaThing{},
+		host:        host,
+		port:        port,
+		exposedAddr: exposedAddr,
+		ctx:         ctx,
+		cancel:      cancel,
+		things:      map[string]*EriaThing{},
 	}
 	p := producer.New(&server.wait)
 	server.Producer = p
@@ -105,7 +107,8 @@ func (s *EriaServer) SetPropertyValue(ref string, property string, value interfa
 }
 
 func (s *EriaServer) StartServer() {
-	httpServer := protocolHttp.NewServer(s.host, s.port)
+	addr := fmt.Sprintf("%s:%d", s.host, s.port)
+	httpServer := protocolHttp.NewServer(addr, s.exposedAddr)
 	s.AddServer(httpServer)
 	wsServer := protocolWebSocket.NewServer(httpServer)
 	s.AddServer(wsServer)
