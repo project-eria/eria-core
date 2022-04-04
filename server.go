@@ -11,6 +11,7 @@ import (
 	"github.com/project-eria/go-wot/producer"
 	"github.com/project-eria/go-wot/protocolHttp"
 	"github.com/project-eria/go-wot/protocolWebSocket"
+	"github.com/project-eria/go-wot/securityScheme"
 	"github.com/project-eria/go-wot/thing"
 	"github.com/rs/zerolog/log"
 )
@@ -41,13 +42,19 @@ func NewServer(host string, port uint) *EriaServer {
 	return server
 }
 
-func NewThingDescription(urn string, title string, description string, capabilities []string) (*thing.Thing, error) {
+func NewThingDescription(urn string, version string, title string, description string, capabilities []string) (*thing.Thing, error) {
 	td, err := model.NewFromSchemas(
 		urn,
+		version,
 		title,
 		description,
 		capabilities,
 	)
+
+	// Add Security
+	noSecurityScheme := securityScheme.NewNoSecurity()
+	td.AddSecurity("no_sec", noSecurityScheme)
+
 	if err != nil {
 		return nil, err
 	}

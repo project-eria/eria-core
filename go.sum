@@ -10,8 +10,8 @@ github.com/julienschmidt/httprouter v1.3.0/go.mod h1:JR6WtHb+2LUe8TCKY3cZOxFyyO8
 github.com/pkg/errors v0.9.1/go.mod h1:bwawxfHBFNV+L2hUp1rHADufV3IMtnDRdf1r5NINEl0=
 github.com/pmezard/go-difflib v1.0.0 h1:4DBwDE0NGyQoBHbLQYPwSUPoCMWR5BEzIk/f1lZbAQM=
 github.com/pmezard/go-difflib v1.0.0/go.mod h1:iKH77koFhYxTK1pcRnkKkqfTogsbg7gZNVY4sRDYZ/4=
-github.com/project-eria/go-wot v0.0.0 h1:kJnI/BLfQ1F0Cc1x80K/DHyz/pLXKw3cVkyk3RXFnmo=
-github.com/project-eria/go-wot v0.0.0/go.mod h1:Cnv2MO1XUZ3KM0F7dmqIe42AYge73n8j7HA4BVC8Wlc=
+github.com/project-eria/go-wot v0.1.2 h1:iyfMja2bVFzs2VIFwLi164KdjNaMuNCwOjNMFGiqHBs=
+github.com/project-eria/go-wot v0.1.2/go.mod h1:Cnv2MO1XUZ3KM0F7dmqIe42AYge73n8j7HA4BVC8Wlc=
 github.com/rs/xid v1.3.0/go.mod h1:trrq9SKmegXys3aeAKXMUTdJsYXVwGY3RLcfgqegfbg=
 github.com/rs/zerolog v1.26.1 h1:/ihwxqH+4z8UxyI70wM1z9yCvkWcfz/a3mj48k/Zngc=
 github.com/rs/zerolog v1.26.1/go.mod h1:/wSSJWX7lVrsOwlbyTRSOJvqRlc+WjWlfes+CiJ+tmc=

@@ -8,8 +8,8 @@ import (
 )
 
 // NewFromSchemas return a thing from schemas @type
-func NewFromSchemas(urn string, title string, description string, capabilities []string) (*thing.Thing, error) {
-	t, err := thing.New(urn, title, description, nil)
+func NewFromSchemas(urn string, version string, title string, description string, capabilities []string) (*thing.Thing, error) {
+	t, err := thing.New(urn, version, title, description, nil)
 	if err != nil {
 		return nil, err
 	}
