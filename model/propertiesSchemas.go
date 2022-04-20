@@ -1,45 +1,12 @@
 package model
 
-import (
-	"errors"
-
-	"github.com/project-eria/go-wot/dataSchema"
-	"github.com/project-eria/go-wot/interaction"
-	"github.com/project-eria/go-wot/thing"
-	"github.com/rs/zerolog/log"
-)
-
-// AddPropertyFromSchema return an property from schema @type
-func AddPropertyFromSchema(t *thing.Thing, id string, defaultValue interface{}, schema string) (*interaction.Property, error) {
-	log.Info().Str("schema", schema).Msg("[thing:AddPropertyFromSchema] Adding property")
-
-	if meta, in := properties[schema]; in {
-		var data dataSchema.Data
-		switch meta.Type {
-		case "boolean":
-			data = dataSchema.NewBoolean(defaultValue.(bool))
-		case "integer":
-			data = dataSchema.NewInteger(defaultValue.(int), meta.Unit, meta.Minimum, meta.Maximum)
-		case "number":
-			data = dataSchema.NewNumber(defaultValue.(float64), meta.Unit, meta.Minimum, meta.Maximum)
-		}
-		property := interaction.NewProperty(
-			id,
-			meta.Title,
-			meta.Description,
-			false,
-			false,
-			true,
-			data,
-		)
-		t.AddProperty(property)
-		// TODO (remove?) property.ATtype = schema
-		return property, nil
-	}
-	return nil, errors.New("Property schema '" + schema + "' not found")
+type SchemaProperty struct {
+	Id           string
+	DefaultValue interface{}
+	Name         string
 }
 
-var properties = map[string]struct {
+type PropertyDesc struct {
 	Title       string
 	Description string
 	Type        string
@@ -47,7 +14,54 @@ var properties = map[string]struct {
 	Unit        string
 	Minimum     uint16
 	Maximum     uint16
-}{
+	MinLength   uint16
+	MaxLength   uint16
+	Pattern     string
+}
+
+var CapabilitiesProperties = map[string][]SchemaProperty{
+	"LightBasic": []SchemaProperty{
+		{Id: "on", DefaultValue: false, Name: "OnOffProperty"},
+	},
+	"LightDimmer": []SchemaProperty{
+		{Id: "brightness", DefaultValue: 0, Name: "BrightnessProperty"},
+	},
+	"ShutterBasic": []SchemaProperty{
+		{Id: "open", DefaultValue: false, Name: "OpenProperty"},
+	},
+	"ShutterPosition": []SchemaProperty{
+		{Id: "position", DefaultValue: 0, Name: "PositionProperty"},
+	},
+	"TemperatureSensor": []SchemaProperty{
+		{Id: "temperature", DefaultValue: 0.0, Name: "TemperatureProperty"},
+	},
+	"VoltageSensor": []SchemaProperty{
+		{Id: "volts", DefaultValue: 0.0, Name: "VoltageProperty"},
+	},
+	"PoolMonitor": []SchemaProperty{
+		{Id: "temperature", DefaultValue: 0.0, Name: "TemperatureProperty"},
+		{Id: "ph", DefaultValue: 0.0, Name: "PhProperty"},
+		{Id: "orp", DefaultValue: 0, Name: "OrpProperty"},
+	},
+	"HygrometerSensor": []SchemaProperty{
+		{Id: "humidity", DefaultValue: 0, Name: "HumidityProperty"},
+	},
+	"BarometerSensor": []SchemaProperty{
+		{Id: "pressure", DefaultValue: 0, Name: "PressureProperty"},
+	},
+	"WindgaugeSensor": []SchemaProperty{
+		{Id: "windStrength", DefaultValue: 0.0, Name: "WindStrengthProperty"},
+		{Id: "windAngle", DefaultValue: 0, Name: "WindAngleProperty"},
+	},
+	"WaterMeter": []SchemaProperty{
+		{Id: "liters", DefaultValue: 0.0, Name: "LitersProperty"},
+	},
+	"UVSensor": []SchemaProperty{
+		{Id: "uvIndex", DefaultValue: 0.0, Name: "UVIndexProperty"},
+	},
+}
+
+var Properties = map[string]PropertyDesc{
 	"OnOffProperty": {
 		Title:       "On/Off",
 		Description: "Whether the device is turned on",
@@ -130,5 +144,12 @@ var properties = map[string]struct {
 		Description: "Number of liters",
 		Type:        "number",
 		Unit:        "l",
+	},
+	"UVIndexProperty": {
+		Title:       "UV Index",
+		Description: "Strength of the sunburn-producing ultraviolet (UV) radiation",
+		Type:        "number",
+		Minimum:     0,
+		Maximum:     20,
 	},
 }

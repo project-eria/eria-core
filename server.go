@@ -8,7 +8,6 @@ import (
 	"sync"
 	"syscall"
 
-	"github.com/project-eria/eria-core/model"
 	"github.com/project-eria/go-wot/producer"
 	"github.com/project-eria/go-wot/protocolHttp"
 	"github.com/project-eria/go-wot/protocolWebSocket"
@@ -45,7 +44,7 @@ func NewServer(host string, port uint, exposedAddr string) *EriaServer {
 }
 
 func NewThingDescription(urn string, version string, title string, description string, capabilities []string) (*thing.Thing, error) {
-	td, err := model.NewFromSchemas(
+	td, err := NewThingFromSchemas(
 		urn,
 		version,
 		title,
@@ -86,6 +85,10 @@ func (s *EriaServer) AddThing(ref string, td *thing.Thing) (*EriaThing, error) {
 			propertyData = &PropertyNumberData{
 				value: property.Data.Default.(float64),
 			}
+		case "string":
+			propertyData = &PropertyStringData{
+				value: property.Data.Default.(string),
+			}
 		}
 
 		eriaThing.propertyHandlers[key] = propertyData
@@ -108,7 +111,7 @@ func (s *EriaServer) SetPropertyValue(ref string, property string, value interfa
 
 func (s *EriaServer) StartServer() {
 	addr := fmt.Sprintf("%s:%d", s.host, s.port)
-	httpServer := protocolHttp.NewServer(addr, s.exposedAddr)
+	httpServer := protocolHttp.NewServer(addr, s.exposedAddr, _appName, _appName+" "+_version)
 	s.AddServer(httpServer)
 	wsServer := protocolWebSocket.NewServer(httpServer)
 	s.AddServer(wsServer)

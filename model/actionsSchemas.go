@@ -1,42 +1,34 @@
 package model
 
-import (
-	"errors"
+type SchemaAction struct {
+	Id   string
+	Name string
+}
 
-	"github.com/project-eria/go-wot/interaction"
-	"github.com/project-eria/go-wot/thing"
-	"github.com/rs/zerolog/log"
-)
+type ActionDesc struct {
+	Title       string
+	Description string
+}
 
-// stringInput := dataSchema.NewString(false)
-// stringOutput := dataSchema.NewString(false)
-
-// AddActionFromSchema return an action from schema @type
-func AddActionFromSchema(t *thing.Thing, id string, schema string) (*interaction.Action, error) {
-	log.Info().Str("schema", schema).Msg("[thing:AddActionFromSchema] Adding action")
-
-	if meta, in := actions[schema]; in {
-		// var input dataSchema.Data
-		// var output dataSchema.Data
-		action := interaction.NewAction(
-			id,
-			meta.Title,
-			meta.Description,
-			nil,
-			nil,
-		)
-		// TODO (remove?) action.ATtype = schema
-		t.AddAction(action)
-		return action, nil
-	}
-	return nil, errors.New("Action schema '" + schema + "' not found")
+var CapabilitiesActions = map[string][]SchemaAction{
+	"LightBasic": []SchemaAction{
+		{Id: "toggle", Name: "ToggleAction"},
+	},
+	"LightDimmer": []SchemaAction{
+		{Id: "fade", Name: "FadeAction"},
+	},
+	"ShutterBasic": []SchemaAction{
+		{Id: "open", Name: "OpenAction"},
+		{Id: "close", Name: "CloseAction"},
+		{Id: "stop", Name: "StopAction"},
+	},
+	"ShutterPosition": []SchemaAction{
+		{Id: "setPosition", Name: "SetPositionAction"},
+	},
 }
 
 // actions schemas list
-var actions = map[string]struct {
-	Title       string
-	Description string
-}{
+var Actions = map[string]ActionDesc{
 	"ToggleAction": {
 		Title:       "Toggle",
 		Description: "Toggles a boolean state on and off",

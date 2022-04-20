@@ -69,3 +69,24 @@ func (p *PropertyNumberData) Set(value interface{}) (bool, error) {
 func (p *PropertyNumberData) Get() interface{} {
 	return p.value
 }
+
+// String
+type PropertyStringData struct {
+	value string
+}
+
+func (p *PropertyStringData) Set(value interface{}) (bool, error) {
+	var changed bool
+	if newValue, ok := value.(string); ok {
+		if p.value != newValue {
+			p.value = newValue
+		}
+		return changed, nil
+	} else {
+		return false, errors.New("provided data is not type string")
+	}
+}
+
+func (p *PropertyStringData) Get() interface{} {
+	return p.value
+}

@@ -1,6 +1,7 @@
 package configmanager
 
 import (
+	"encoding/json"
 	"errors"
 	"io/ioutil"
 	"os"
@@ -28,7 +29,7 @@ func Init(filePath string, s interface{}) (*ConfigManager, error) {
 		filepath: filePath,
 		s:        s,
 	}
-	log.Debug().Str("filePath", filePath).Msg("[configmanager:Init] Looking for file")
+	log.Trace().Str("filePath", filePath).Msg("[configmanager:Init] Looking for file")
 	if _, err := os.Stat(filePath); os.IsNotExist(err) {
 		return configManager, errors.New(eNotFound)
 	}
@@ -43,7 +44,7 @@ func IsFileMissing(e error) bool {
 
 // Load config from file, based on the configmanger parameters
 func (c *ConfigManager) Load() error {
-	log.Debug().Str("filePath", c.filepath).Msg("[configmanager:Load] Loading config")
+	log.Trace().Str("filePath", c.filepath).Msg("[configmanager:Load] Loading config")
 	bytes, err := ioutil.ReadFile(c.filepath)
 	if err != nil {
 		// TODO What to do if file doesn't exists
@@ -61,7 +62,10 @@ func (c *ConfigManager) Load() error {
 	if err := processTags(c.s); err != nil {
 		return err
 	}
-	log.Trace().Msgf("[configmanager:Load] %#v", c.s)
+	if e := log.Trace(); e.Enabled() {
+		content, _ := json.MarshalIndent(c.s, "", "  ")
+		e.Msgf("[configmanager:Load] %s", string(content))
+	}
 	return nil
 }
 
@@ -70,7 +74,7 @@ func (c *ConfigManager) Load() error {
 func (c *ConfigManager) Save() error {
 	c.Lock()
 
-	log.Debug().Str("module", "configmanager").Str("filename", c.filepath).Msg("Saving config")
+	log.Trace().Str("module", "configmanager").Str("filename", c.filepath).Msg("Saving config")
 
 	bytes, err := yaml.Marshal(c.s)
 	if err != nil {
