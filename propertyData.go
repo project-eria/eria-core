@@ -1,6 +1,8 @@
 package eria
 
-import "errors"
+import (
+	"errors"
+)
 
 type PropertyData interface {
 	Set(interface{}) (bool, error)
@@ -17,6 +19,7 @@ func (p *PropertyBooleanData) Set(value interface{}) (bool, error) {
 	if newValue, ok := value.(bool); ok {
 		if p.value != newValue {
 			p.value = newValue
+			changed = true
 		}
 		return changed, nil
 	} else {
@@ -38,6 +41,7 @@ func (p *PropertyIntegerData) Set(value interface{}) (bool, error) {
 	if newValue, ok := value.(int); ok {
 		if p.value != newValue {
 			p.value = newValue
+			changed = true
 		}
 		return changed, nil
 	} else {
@@ -59,6 +63,7 @@ func (p *PropertyNumberData) Set(value interface{}) (bool, error) {
 	if newValue, ok := value.(float64); ok {
 		if p.value != newValue {
 			p.value = newValue
+			changed = true
 		}
 		return changed, nil
 	} else {
@@ -80,6 +85,7 @@ func (p *PropertyStringData) Set(value interface{}) (bool, error) {
 	if newValue, ok := value.(string); ok {
 		if p.value != newValue {
 			p.value = newValue
+			changed = true
 		}
 		return changed, nil
 	} else {
