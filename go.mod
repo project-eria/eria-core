@@ -3,7 +3,7 @@ module github.com/project-eria/eria-core
 go 1.17
 
 require (
-	github.com/project-eria/go-wot v1.0.0
+	github.com/project-eria/go-wot v1.0.1
 	github.com/rs/zerolog v1.26.1
 	gopkg.in/yaml.v3 v3.0.0-20200313102051-9f266ea9e77c
 )
@@ -23,3 +23,16 @@ require (
 )
 
 // replace github.com/project-eria/go-wot => ../go-wot
+
+retract (
+	v0.3.2
+	v0.3.1
+	v0.3.0
+	v0.2.2
+	v0.2.1
+	v0.2.0
+	v0.1.0
+	v0.0.2
+	v0.0.1
+	v0.0.0
+)
