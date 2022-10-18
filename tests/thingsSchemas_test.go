@@ -22,7 +22,7 @@ func TestNewFromSchemas(t *testing.T) {
 	// 		title: "LightBasic schema",
 	// 		args:  args{urn: "dev:light", title: "Light", description: "My Light", capabilities: []string{"LightBasic"}},
 	// 		want: &thing.Thing{
-	// 			AtContext:           "http://www.w3.org/ns/td",
+	// 			AtContext:           "https://www.w3.org/2022/wot/td/v1.1",
 	// 			AtTypes:             []string{},
 	// 			ID:                  "urn:dev:light",
 	// 			Title:               "Light",

@@ -43,10 +43,10 @@ func NewServer(host string, port uint, exposedAddr string) *EriaServer {
 	return server
 }
 
-func NewThingDescription(urn string, version string, title string, description string, capabilities []string) (*thing.Thing, error) {
+func NewThingDescription(urn string, tdVersion string, title string, description string, capabilities []string) (*thing.Thing, error) {
 	td, err := NewThingFromSchemas(
 		urn,
-		version,
+		tdVersion,
 		title,
 		description,
 		capabilities,
@@ -55,6 +55,10 @@ func NewThingDescription(urn string, version string, title string, description s
 	if err != nil {
 		return nil, err
 	}
+	//Add Versions
+	td.AddContext("schema", "https://schema.org/")
+	td.AddVersion("schema:softwareVersion", AppVersion)
+
 	// Add Security
 	noSecurityScheme := securityScheme.NewNoSecurity()
 	td.AddSecurity("no_sec", noSecurityScheme)
@@ -111,7 +115,7 @@ func (s *EriaServer) SetPropertyValue(ref string, property string, value interfa
 
 func (s *EriaServer) StartServer() {
 	addr := fmt.Sprintf("%s:%d", s.host, s.port)
-	httpServer := protocolHttp.NewServer(addr, s.exposedAddr, _appName, _appName+" "+_version)
+	httpServer := protocolHttp.NewServer(addr, s.exposedAddr, _appName, _appName+" "+AppVersion)
 	s.AddServer(httpServer)
 	wsServer := protocolWebSocket.NewServer(httpServer)
 	s.AddServer(wsServer)

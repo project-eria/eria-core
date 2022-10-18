@@ -24,8 +24,6 @@ func NewThingFromSchemas(urn string, version string, title string, description s
 
 // AddSchemas add capabilities to a thing using schemas @type
 func AddSchemas(t *thing.Thing, capabilities []string, postfix string) error {
-	// TODO (remove?) t.SetContext("http://www.w3.org/ns/td")
-
 	for _, capability := range capabilities {
 		if err := AddSchema(t, capability, postfix); err != nil {
 			return err

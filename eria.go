@@ -14,25 +14,28 @@ import (
 )
 
 var (
+	// Version is a placeholder that will receive the git tag version during build time
+	// go build -v -ldflags "-X github.com/project-eria/eria-core.AppVersion=vx.x.x
+	AppVersion   = "-"
+	CoreVersion  = "-"
 	_showVersion *bool
 	_logLevel    *string
 	_configPath  *string
-	_version     string
 	_appName     string
 )
 
 // Init gets the app name and version and displays app version if requested
-func Init(appName string, version string) {
-	_version = version
+func Init(appName string) {
 	_appName = appName
 	//	zerolog.TimeFieldFormat = zerolog.TimeFormatUnix
 	_showVersion = flag.Bool("v", false, "Display the version")
 	_logLevel = flag.String("log", "info", "log level [error, warn, info, debug, trace]")
 	_configPath = flag.String("config", "config.yml", "config file path")
 	flag.Parse()
+
 	// Show version (-v)
 	if *_showVersion {
-		fmt.Printf("%s\n", _version)
+		fmt.Printf("%s\n", AppVersion)
 		os.Exit(0)
 	}
 
@@ -40,7 +43,8 @@ func Init(appName string, version string) {
 	zerolog.TimestampFunc = func() time.Time {
 		return time.Now().In(time.Local)
 	}
-	log.Info().Msgf("[eria:Init] Starting %s %s...", _appName, _version)
+
+	log.Info().Msgf("[eria:Init] Starting %s %s...", _appName, AppVersion)
 
 	level, err := zerolog.ParseLevel(*_logLevel)
 	if err != nil {
