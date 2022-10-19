@@ -4,28 +4,33 @@ import (
 	"errors"
 
 	"github.com/project-eria/eria-core/model"
+	actionModel "github.com/project-eria/eria-core/model/action"
+	eventModel "github.com/project-eria/eria-core/model/event"
+	propertyModel "github.com/project-eria/eria-core/model/property"
+	"github.com/project-eria/go-wot/dataSchema"
+	"github.com/project-eria/go-wot/interaction"
 	"github.com/project-eria/go-wot/thing"
 	"github.com/rs/zerolog/log"
 )
 
-// NewFromSchemas return a thing from schemas @type
-func NewThingFromSchemas(urn string, version string, title string, description string, capabilities []string) (*thing.Thing, error) {
+// NewThingFromModels return a thing from schemas @type
+func NewThingFromModels(urn string, version string, title string, description string, modelIds []string) (*thing.Thing, error) {
 	t, err := thing.New(urn, version, title, description, nil)
 	if err != nil {
 		return nil, err
 	}
 
-	if err := AddSchemas(t, capabilities, ""); err != nil {
+	if err := AddModels(t, modelIds, ""); err != nil {
 		return nil, err
 	}
 
 	return t, nil
 }
 
-// AddSchemas add capabilities to a thing using schemas @type
-func AddSchemas(t *thing.Thing, capabilities []string, postfix string) error {
-	for _, capability := range capabilities {
-		if err := AddSchema(t, capability, postfix); err != nil {
+// AddModels add capabilities to a thing using schemas @type
+func AddModels(t *thing.Thing, modelIds []string, postfix string) error {
+	for _, modelId := range modelIds {
+		if err := AddModel(t, modelId, postfix); err != nil {
 			return err
 		}
 	}
@@ -33,32 +38,86 @@ func AddSchemas(t *thing.Thing, capabilities []string, postfix string) error {
 	return nil
 }
 
-// AddSchema add a capability to a thing using schema @type
-func AddSchema(t *thing.Thing, capability string, postfix string) error {
-	log.Info().Str("capability", capability).Msg("[thing:AddSchema] Adding capability")
-	propertiesSchemas, inProperties := model.CapabilitiesProperties[capability]
-	if inProperties {
-		for _, schema := range propertiesSchemas {
-			id := schema.Id + postfix
-			if _, err := AddPropertyFromSchema(t, id, schema.DefaultValue, schema.Name); err != nil {
-				return err
-			}
-		}
-	}
-	actionsSchemas, inActions := model.CapabilitiesActions[capability]
-	if inActions {
-		for _, schema := range actionsSchemas {
-			id := schema.Id + postfix
-			if _, err := AddActionFromSchema(t, id, schema.Name); err != nil {
-				return err
-			}
-		}
-	}
-	if !inProperties && !inActions {
-		return errors.New("Capability schema '" + capability + "' not found")
+// AddModel add a capability to a thing using schema @type
+func AddModel(t *thing.Thing, modelId string, postfix string) error {
+	log.Info().Str("model", modelId).Msg("[thing:AddModel] Adding model")
+	modelType, modelExists := model.Models[modelId]
+	if !modelExists {
+		return errors.New("Model '" + modelId + "' not found")
 	}
 
-	// TODO (remove?) t.AddType(capability)
+	for key, property := range modelType.Properties {
+		id := key + postfix
+		if _, err := AddProperty(t, id, property.DefaultValue, property.Meta); err != nil {
+			return err
+		}
+	}
+	for key, event := range modelType.Events {
+		id := key + postfix
+		if _, err := AddEvent(t, id, event.Meta); err != nil {
+			return err
+		}
+	}
+	for key, action := range modelType.Actions {
+		id := key + postfix
+		if _, err := AddAction(t, id, action.Meta); err != nil {
+			return err
+		}
+	}
 
 	return nil
+}
+
+func AddAction(t *thing.Thing, id string, meta actionModel.Meta) (*interaction.Action, error) {
+	log.Trace().Str("action", id).Msg("[thing:AddAction] Adding action")
+	action := interaction.NewAction(
+		id,
+		meta.Title,
+		meta.Description,
+		nil,
+		nil,
+	)
+	// TODO (remove?) action.ATtype = schema
+	t.AddAction(action)
+	return action, nil
+}
+
+// AddProperty return an property from schema @type
+func AddProperty(t *thing.Thing, id string, defaultValue interface{}, meta propertyModel.Meta) (*interaction.Property, error) {
+	log.Trace().Str("property", id).Msg("[thing:AddProperty] Adding property")
+	var data dataSchema.Data
+	switch meta.Type {
+	case "boolean":
+		data = dataSchema.NewBoolean(defaultValue.(bool))
+	case "integer":
+		data = dataSchema.NewInteger(defaultValue.(int), meta.Unit, meta.Minimum, meta.Maximum)
+	case "number":
+		data = dataSchema.NewNumber(defaultValue.(float64), meta.Unit, meta.Minimum, meta.Maximum)
+	case "string":
+		data = dataSchema.NewString(defaultValue.(string), meta.MinLength, meta.MaxLength, meta.Pattern)
+	}
+	property := interaction.NewProperty(
+		id,
+		meta.Title,
+		meta.Description,
+		false,
+		false,
+		true,
+		data,
+	)
+	t.AddProperty(property)
+	// TODO (remove?) property.ATtype = schema
+	return property, nil
+}
+
+func AddEvent(t *thing.Thing, id string, meta eventModel.Meta) (*interaction.Event, error) {
+	log.Trace().Str("event", id).Msg("[thing:AddEvent] Adding event")
+	event := interaction.NewEvent(
+		id,
+		meta.Title,
+		meta.Description,
+		nil,
+	)
+	t.AddEvent(event)
+	return event, nil
 }

@@ -44,7 +44,7 @@ func NewServer(host string, port uint, exposedAddr string) *EriaServer {
 }
 
 func NewThingDescription(urn string, tdVersion string, title string, description string, capabilities []string) (*thing.Thing, error) {
-	td, err := NewThingFromSchemas(
+	td, err := NewThingFromModels(
 		urn,
 		tdVersion,
 		title,
