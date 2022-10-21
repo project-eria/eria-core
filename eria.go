@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"os/signal"
+	"runtime/debug"
 	"syscall"
 	"time"
 
@@ -16,25 +17,24 @@ import (
 var (
 	// Version is a placeholder that will receive the git tag version during build time
 	// go build -v -ldflags "-X github.com/project-eria/eria-core.AppVersion=vx.x.x
-	AppVersion   = "-"
-	CoreVersion  = "-"
-	_showVersion *bool
-	_logLevel    *string
-	_configPath  *string
-	_appName     string
+	AppVersion  = "-"
+	CoreVersion = "-"
+	_logLevel   = zerolog.InfoLevel
+	_configPath *string
+	_appName    string
 )
 
 // Init gets the app name and version and displays app version if requested
 func Init(appName string) {
 	_appName = appName
 	//	zerolog.TimeFieldFormat = zerolog.TimeFormatUnix
-	_showVersion = flag.Bool("v", false, "Display the version")
-	_logLevel = flag.String("log", "info", "log level [error, warn, info, debug, trace]")
+	showVersion := flag.Bool("v", false, "Display the version")
+	logLevelStr := flag.String("log", "info", "log level [error, warn, info, debug, trace]")
 	_configPath = flag.String("config", "config.yml", "config file path")
 	flag.Parse()
 
 	// Show version (-v)
-	if *_showVersion {
+	if *showVersion {
 		fmt.Printf("%s\n", AppVersion)
 		os.Exit(0)
 	}
@@ -46,12 +46,25 @@ func Init(appName string) {
 
 	log.Info().Msgf("[eria:Init] Starting %s %s...", _appName, AppVersion)
 
-	level, err := zerolog.ParseLevel(*_logLevel)
-	if err != nil {
-		level = zerolog.InfoLevel
+	logLevel, err := zerolog.ParseLevel(*logLevelStr)
+	if err == nil {
+		_logLevel = logLevel
+		zerolog.SetGlobalLevel(logLevel)
 	}
-	zerolog.SetGlobalLevel(level)
-	log.Log().Stringer("level", level).Msg("[eria:Init] Set log level")
+	log.Info().Stringer("log level", _logLevel).Msg("[eria:Init] Set log level")
+
+	// Get EriaCore version
+	bi, ok := debug.ReadBuildInfo()
+	if !ok {
+		log.Error().Msg("[core:NewServer] Getting build info failed (not in module mode?)!")
+		return
+	}
+
+	for _, dep := range bi.Deps {
+		if dep.Path == "github.com/project-eria/eria-core" {
+			CoreVersion = dep.Version
+		}
+	}
 }
 
 // LoadConfig Loads the config file into a struct
