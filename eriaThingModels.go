@@ -88,13 +88,29 @@ func AddProperty(t *thing.Thing, id string, defaultValue interface{}, meta prope
 	var data dataSchema.Data
 	switch meta.Type {
 	case "boolean":
-		data = dataSchema.NewBoolean(defaultValue.(bool))
+		var defaultBoolean bool
+		if defaultValue != nil {
+			defaultBoolean = defaultValue.(bool)
+		}
+		data = dataSchema.NewBoolean(defaultBoolean)
 	case "integer":
-		data = dataSchema.NewInteger(defaultValue.(int), meta.Unit, meta.Minimum, meta.Maximum)
+		var defaultInteger int
+		if defaultValue != nil {
+			defaultInteger = defaultValue.(int)
+		}
+		data = dataSchema.NewInteger(defaultInteger, meta.Unit, meta.Minimum, meta.Maximum)
 	case "number":
-		data = dataSchema.NewNumber(defaultValue.(float64), meta.Unit, meta.Minimum, meta.Maximum)
+		var defaultNumber float64
+		if defaultValue != nil {
+			defaultNumber = defaultValue.(float64)
+		}
+		data = dataSchema.NewNumber(defaultNumber, meta.Unit, meta.Minimum, meta.Maximum)
 	case "string":
-		data = dataSchema.NewString(defaultValue.(string), meta.MinLength, meta.MaxLength, meta.Pattern)
+		var defaultString string
+		if defaultValue != nil {
+			defaultString = defaultValue.(string)
+		}
+		data = dataSchema.NewString(defaultString, meta.MinLength, meta.MaxLength, meta.Pattern)
 	}
 	property := interaction.NewProperty(
 		id,
