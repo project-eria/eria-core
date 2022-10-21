@@ -7,6 +7,7 @@ import (
 )
 
 type Model struct {
+	Version    string
 	Properties map[string]ModelProperty
 	Events     map[string]ModelEvent
 	Actions    map[string]ModelAction

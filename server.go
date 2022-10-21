@@ -27,7 +27,7 @@ type EriaServer struct {
 	*producer.Producer
 }
 
-func NewServer(host string, port uint, exposedAddr string) *EriaServer {
+func NewServer(host string, port uint, exposedAddr string, instance string) *EriaServer {
 	ctx, cancel := context.WithCancel(context.Background())
 
 	server := &EriaServer{
@@ -40,6 +40,9 @@ func NewServer(host string, port uint, exposedAddr string) *EriaServer {
 	}
 	p := producer.New(&server.wait)
 	server.Producer = p
+
+	server.AddAppController(instance)
+
 	return server
 }
 

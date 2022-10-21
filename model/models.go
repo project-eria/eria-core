@@ -6,6 +6,12 @@ import (
 )
 
 var Models = map[string]Model{
+	"EriaAppController": Model{
+		Version: "1.0.0",
+		Properties: map[string]ModelProperty{
+			"logLevel": {Meta: propertyModel.LogLevel},
+		},
+	},
 	"LightBasic": Model{
 		Properties: map[string]ModelProperty{
 			"on": {DefaultValue: false, Meta: propertyModel.OnOff},
