@@ -13,7 +13,7 @@ import (
 	"github.com/project-eria/go-wot/protocolWebSocket"
 	"github.com/project-eria/go-wot/securityScheme"
 	"github.com/project-eria/go-wot/thing"
-	"github.com/rs/zerolog/log"
+	zlog "github.com/rs/zerolog/log"
 )
 
 type EriaServer struct {
@@ -111,7 +111,7 @@ func (s *EriaServer) SetPropertyValue(ref string, property string, value interfa
 	if thing, in := s.things[ref]; in {
 		return thing.SetPropertyValue(property, value)
 	} else {
-		log.Error().Str("thing", ref).Msg("[core] thing not found")
+		zlog.Error().Str("thing", ref).Msg("[core] thing not found")
 	}
 	return false
 }
@@ -141,7 +141,7 @@ func (s *EriaServer) StartServer() {
 
 	// Block until keyboard interrupt is received.
 	<-c
-	log.Info().Msg("[eria:WaitForSignal] Keyboard interrupt received, Stopping...")
+	zlog.Info().Msg("[eria:WaitForSignal] Keyboard interrupt received, Stopping...")
 	s.cancel()
 	// Wait for the child goroutine to finish, which will only occur when
 	// the child process has stopped and the call to cmd.Wait has returned.

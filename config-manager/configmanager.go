@@ -7,7 +7,7 @@ import (
 	"os"
 	"reflect"
 
-	"github.com/rs/zerolog/log"
+	zlog "github.com/rs/zerolog/log"
 
 	"gopkg.in/yaml.v3"
 )
@@ -29,7 +29,7 @@ func Init(filePath string, s interface{}) (*ConfigManager, error) {
 		filepath: filePath,
 		s:        s,
 	}
-	log.Trace().Str("filePath", filePath).Msg("[configmanager:Init] Looking for file")
+	zlog.Trace().Str("filePath", filePath).Msg("[configmanager:Init] Looking for file")
 	if _, err := os.Stat(filePath); os.IsNotExist(err) {
 		return configManager, errors.New(eNotFound)
 	}
@@ -44,7 +44,7 @@ func IsFileMissing(e error) bool {
 
 // Load config from file, based on the configmanger parameters
 func (c *ConfigManager) Load() error {
-	log.Trace().Str("filePath", c.filepath).Msg("[configmanager:Load] Loading config")
+	zlog.Trace().Str("filePath", c.filepath).Msg("[configmanager:Load] Loading config")
 	bytes, err := ioutil.ReadFile(c.filepath)
 	if err != nil {
 		// TODO What to do if file doesn't exists
@@ -62,7 +62,7 @@ func (c *ConfigManager) Load() error {
 	if err := processTags(c.s); err != nil {
 		return err
 	}
-	if e := log.Trace(); e.Enabled() {
+	if e := zlog.Trace(); e.Enabled() {
 		content, _ := json.MarshalIndent(c.s, "", "  ")
 		e.Msgf("[configmanager:Load] %s", string(content))
 	}
@@ -71,7 +71,7 @@ func (c *ConfigManager) Load() error {
 
 // Save config to file, based on the configmanger parameters
 func (c *ConfigManager) Save() error {
-	log.Trace().Str("filePath", c.filepath).Msg("[configmanager:Load] Saving config")
+	zlog.Trace().Str("filePath", c.filepath).Msg("[configmanager:Load] Saving config")
 
 	bytes, err := yaml.Marshal(c.s)
 	if err != nil {

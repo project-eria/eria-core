@@ -7,17 +7,17 @@ import (
 	"github.com/project-eria/go-wot/securityScheme"
 	"github.com/project-eria/go-wot/thing"
 	"github.com/rs/zerolog"
-	"github.com/rs/zerolog/log"
+	zlog "github.com/rs/zerolog/log"
 )
 
 func (s *EriaServer) AddAppController(instance string) {
 	eriaAppControllerTd, err := thing.New("eria:app:controler:"+instance, CoreVersion, "EriaAppController", "Eria App Controller", nil)
 	if err != nil {
-		log.Panic().Err(err).Msg("[core] Can't create app controller thing")
+		zlog.Panic().Err(err).Msg("[core] Can't create app controller thing")
 	}
 
 	if err := AddModel(eriaAppControllerTd, "EriaAppController", ""); err != nil {
-		log.Panic().Err(err).Msg("[core] Can't add controller thing model")
+		zlog.Panic().Err(err).Msg("[core] Can't add controller thing model")
 	}
 
 	// Add Security
@@ -26,7 +26,7 @@ func (s *EriaServer) AddAppController(instance string) {
 
 	eriaAppControllerThing, err := s.AddThing("eria", eriaAppControllerTd)
 	if err != nil {
-		log.Panic().Err(err).Msg("[core] Can't add app controller")
+		zlog.Panic().Err(err).Msg("[core] Can't add app controller")
 	}
 
 	eriaAppControllerThing.SetPropertyReadHandler("logLevel", logLevelRead)
@@ -45,6 +45,6 @@ func logLevelWrite(t *producer.ExposedThing, name string, value interface{}) err
 	}
 	_logLevel = logLevel
 	zerolog.SetGlobalLevel(logLevel)
-	log.Info().Stringer("log level", logLevel).Msg("[core:AppController] Set log level")
+	zlog.Info().Stringer("log level", logLevel).Msg("[core:AppController] Set log level")
 	return nil
 }

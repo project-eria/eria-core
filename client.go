@@ -10,7 +10,7 @@ import (
 	"github.com/project-eria/go-wot/protocolHttp"
 	"github.com/project-eria/go-wot/protocolWebSocket"
 	"github.com/project-eria/go-wot/thing"
-	"github.com/rs/zerolog/log"
+	zlog "github.com/rs/zerolog/log"
 )
 
 type EriaClient struct {
@@ -51,7 +51,7 @@ func (c *EriaClient) ConnectThing(url string) (*consumer.ConsumedThing, error) {
 			break
 		}
 
-		log.Error().Str("url", url).Err(err).Msgf("[eria:ConnectThing] Retrying in %v\n", backoff)
+		zlog.Error().Str("url", url).Err(err).Msgf("[eria:ConnectThing] Retrying in %v\n", backoff)
 		time.Sleep(backoff)
 	}
 
@@ -60,13 +60,13 @@ func (c *EriaClient) ConnectThing(url string) (*consumer.ConsumedThing, error) {
 	}
 	defer resp.Body.Close()
 	if resp.StatusCode != http.StatusOK {
-		log.Error().Str("status", resp.Status).Str("url", url).Msg("[eria:ConnectThing] incorrect response")
+		zlog.Error().Str("status", resp.Status).Str("url", url).Msg("[eria:ConnectThing] incorrect response")
 		return nil, errors.New("incorrect response")
 	}
 
 	var td thing.Thing
 	if err := json.NewDecoder(resp.Body).Decode(&td); err != nil {
-		log.Error().Str("url", url).Err(err).Msg("[eria:ConnectThing]")
+		zlog.Error().Str("url", url).Err(err).Msg("[eria:ConnectThing]")
 		return nil, errors.New("can't decode json")
 	}
 

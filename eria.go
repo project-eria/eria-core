@@ -11,7 +11,7 @@ import (
 
 	configmanager "github.com/project-eria/eria-core/config-manager"
 	"github.com/rs/zerolog"
-	"github.com/rs/zerolog/log"
+	zlog "github.com/rs/zerolog/log"
 )
 
 var (
@@ -39,24 +39,24 @@ func Init(appName string) {
 		os.Exit(0)
 	}
 
-	log.Logger = log.Output(zerolog.ConsoleWriter{Out: os.Stdout, TimeFormat: "02/01|15:04:05"})
+	zlog.Logger = zlog.Output(zerolog.ConsoleWriter{Out: os.Stdout, TimeFormat: "02/01|15:04:05"})
 	zerolog.TimestampFunc = func() time.Time {
 		return time.Now().In(time.Local)
 	}
 
-	log.Info().Msgf("[eria:Init] Starting %s %s...", _appName, AppVersion)
+	zlog.Info().Msgf("[eria:Init] Starting %s %s...", _appName, AppVersion)
 
 	logLevel, err := zerolog.ParseLevel(*logLevelStr)
 	if err == nil {
 		_logLevel = logLevel
 		zerolog.SetGlobalLevel(logLevel)
 	}
-	log.Info().Stringer("log level", _logLevel).Msg("[eria:Init] Set log level")
+	zlog.Info().Stringer("log level", _logLevel).Msg("[eria:Init] Set log level")
 
 	// Get EriaCore version
 	bi, ok := debug.ReadBuildInfo()
 	if !ok {
-		log.Error().Msg("[core:NewServer] Getting build info failed (not in module mode?)!")
+		zlog.Error().Msg("[core:NewServer] Getting build info failed (not in module mode?)!")
 		return
 	}
 
@@ -72,14 +72,14 @@ func LoadConfig(config interface{}) *configmanager.ConfigManager {
 	cm, err := configmanager.Init(*_configPath, config)
 	if err != nil {
 		if configmanager.IsFileMissing(err) {
-			log.Fatal().Msg("[eria:loadconfig] Config file do not exists...")
+			zlog.Fatal().Msg("[eria:loadconfig] Config file do not exists...")
 		} else {
-			log.Fatal().Str("filePath", *_configPath).Err(err).Msg("[eria:loadconfig]")
+			zlog.Fatal().Str("filePath", *_configPath).Err(err).Msg("[eria:loadconfig]")
 		}
 	}
 
 	if err := cm.Load(); err != nil {
-		log.Fatal().Err(err).Msg("[eria:loadconfig]")
+		zlog.Fatal().Err(err).Msg("[eria:loadconfig]")
 	}
 	return cm
 }
@@ -97,5 +97,5 @@ func WaitForSignal() {
 
 	// Block until keyboard interrupt is received.
 	<-c
-	log.Info().Msg("[eria:WaitForSignal] Keyboard interrupt received, Stopping...")
+	zlog.Info().Msg("[eria:WaitForSignal] Keyboard interrupt received, Stopping...")
 }

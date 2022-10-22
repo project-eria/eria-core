@@ -10,7 +10,7 @@ import (
 	"github.com/project-eria/go-wot/dataSchema"
 	"github.com/project-eria/go-wot/interaction"
 	"github.com/project-eria/go-wot/thing"
-	"github.com/rs/zerolog/log"
+	zlog "github.com/rs/zerolog/log"
 )
 
 // NewThingFromModels return a thing from schemas @type
@@ -40,7 +40,7 @@ func AddModels(t *thing.Thing, modelIds []string, postfix string) error {
 
 // AddModel add a capability to a thing using schema @type
 func AddModel(t *thing.Thing, modelId string, postfix string) error {
-	log.Info().Str("model", modelId).Msg("[thing:AddModel] Adding model")
+	zlog.Info().Str("model", modelId).Msg("[thing:AddModel] Adding model")
 	modelType, modelExists := model.Models[modelId]
 	if !modelExists {
 		return errors.New("Model '" + modelId + "' not found")
@@ -69,7 +69,7 @@ func AddModel(t *thing.Thing, modelId string, postfix string) error {
 }
 
 func AddAction(t *thing.Thing, id string, meta actionModel.Meta) (*interaction.Action, error) {
-	log.Trace().Str("action", id).Msg("[thing:AddAction] Adding action")
+	zlog.Trace().Str("action", id).Msg("[thing:AddAction] Adding action")
 	action := interaction.NewAction(
 		id,
 		meta.Title,
@@ -84,7 +84,7 @@ func AddAction(t *thing.Thing, id string, meta actionModel.Meta) (*interaction.A
 
 // AddProperty return an property from schema @type
 func AddProperty(t *thing.Thing, id string, defaultValue interface{}, meta propertyModel.Meta) (*interaction.Property, error) {
-	log.Trace().Str("property", id).Msg("[thing:AddProperty] Adding property")
+	zlog.Trace().Str("property", id).Msg("[thing:AddProperty] Adding property")
 	var data dataSchema.Data
 	switch meta.Type {
 	case "boolean":
@@ -127,7 +127,7 @@ func AddProperty(t *thing.Thing, id string, defaultValue interface{}, meta prope
 }
 
 func AddEvent(t *thing.Thing, id string, meta eventModel.Meta) (*interaction.Event, error) {
-	log.Trace().Str("event", id).Msg("[thing:AddEvent] Adding event")
+	zlog.Trace().Str("event", id).Msg("[thing:AddEvent] Adding event")
 	event := interaction.NewEvent(
 		id,
 		meta.Title,
