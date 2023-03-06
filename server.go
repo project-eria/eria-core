@@ -141,7 +141,7 @@ func (s *EriaServer) StartServer() {
 
 	// Block until keyboard interrupt is received.
 	<-c
-	zlog.Info().Msg("[eria:WaitForSignal] Keyboard interrupt received, Stopping...")
+	zlog.Info().Msg("[core:WaitForSignal] Keyboard interrupt received, Stopping...")
 	s.cancel()
 	// Wait for the child goroutine to finish, which will only occur when
 	// the child process has stopped and the call to cmd.Wait has returned.

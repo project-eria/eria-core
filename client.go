@@ -51,7 +51,7 @@ func (c *EriaClient) ConnectThing(url string) (*consumer.ConsumedThing, error) {
 			break
 		}
 
-		zlog.Error().Str("url", url).Err(err).Msgf("[eria:ConnectThing] Retrying in %v\n", backoff)
+		zlog.Error().Str("url", url).Err(err).Msgf("[core:ConnectThing] Retrying in %v\n", backoff)
 		time.Sleep(backoff)
 	}
 
@@ -60,13 +60,13 @@ func (c *EriaClient) ConnectThing(url string) (*consumer.ConsumedThing, error) {
 	}
 	defer resp.Body.Close()
 	if resp.StatusCode != http.StatusOK {
-		zlog.Error().Str("status", resp.Status).Str("url", url).Msg("[eria:ConnectThing] incorrect response")
+		zlog.Error().Str("status", resp.Status).Str("url", url).Msg("[core:ConnectThing] incorrect response")
 		return nil, errors.New("incorrect response")
 	}
 
 	var td thing.Thing
 	if err := json.NewDecoder(resp.Body).Decode(&td); err != nil {
-		zlog.Error().Str("url", url).Err(err).Msg("[eria:ConnectThing]")
+		zlog.Error().Str("url", url).Err(err).Msg("[core:ConnectThing]")
 		return nil, errors.New("can't decode json")
 	}
 

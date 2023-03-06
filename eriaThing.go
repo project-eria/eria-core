@@ -34,7 +34,7 @@ func (t *EriaThing) SetPropertyValue(property string, value interface{}) bool {
 
 func (t *EriaThing) GetPropertyValue(property string) interface{} {
 	if t == nil {
-		zlog.Error().Msg("[core:SetPropertyValue] nil thing")
+		zlog.Error().Msg("[core:GetPropertyValue] nil thing")
 		return nil
 	}
 

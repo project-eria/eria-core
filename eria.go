@@ -44,14 +44,14 @@ func Init(appName string) {
 		return time.Now().In(time.Local)
 	}
 
-	zlog.Info().Msgf("[eria:Init] Starting %s %s...", _appName, AppVersion)
+	zlog.Info().Msgf("[core:Init] Starting %s %s...", _appName, AppVersion)
 
 	logLevel, err := zerolog.ParseLevel(*logLevelStr)
 	if err == nil {
 		_logLevel = logLevel
 		zerolog.SetGlobalLevel(logLevel)
 	}
-	zlog.Info().Stringer("log level", _logLevel).Msg("[eria:Init] Set log level")
+	zlog.Info().Stringer("log level", _logLevel).Msg("[core:Init] Set log level")
 
 	// Get EriaCore version
 	bi, ok := debug.ReadBuildInfo()
@@ -72,14 +72,14 @@ func LoadConfig(config interface{}) *configmanager.ConfigManager {
 	cm, err := configmanager.Init(*_configPath, config)
 	if err != nil {
 		if configmanager.IsFileMissing(err) {
-			zlog.Fatal().Msg("[eria:loadconfig] Config file do not exists...")
+			zlog.Fatal().Msg("[core:loadconfig] Config file do not exists...")
 		} else {
-			zlog.Fatal().Str("filePath", *_configPath).Err(err).Msg("[eria:loadconfig]")
+			zlog.Fatal().Str("filePath", *_configPath).Err(err).Msg("[core:loadconfig]")
 		}
 	}
 
 	if err := cm.Load(); err != nil {
-		zlog.Fatal().Err(err).Msg("[eria:loadconfig]")
+		zlog.Fatal().Err(err).Msg("[core:loadconfig]")
 	}
 	return cm
 }
@@ -97,5 +97,5 @@ func WaitForSignal() {
 
 	// Block until keyboard interrupt is received.
 	<-c
-	zlog.Info().Msg("[eria:WaitForSignal] Keyboard interrupt received, Stopping...")
+	zlog.Info().Msg("[core:WaitForSignal] Keyboard interrupt received, Stopping...")
 }
