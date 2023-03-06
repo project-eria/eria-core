@@ -82,19 +82,23 @@ func (s *EriaServer) AddThing(ref string, td *thing.Thing) (*EriaThing, error) {
 		switch property.Type {
 		case "boolean":
 			propertyData = &PropertyBooleanData{
-				value: property.Data.Default.(bool),
+				value:               property.Data.Default.(bool),
+				PropertyGeneralData: &PropertyGeneralData{},
 			}
 		case "integer":
 			propertyData = &PropertyIntegerData{
-				value: property.Data.Default.(int),
+				value:               property.Data.Default.(int),
+				PropertyGeneralData: &PropertyGeneralData{},
 			}
 		case "number":
 			propertyData = &PropertyNumberData{
-				value: property.Data.Default.(float64),
+				value:               property.Data.Default.(float64),
+				PropertyGeneralData: &PropertyGeneralData{},
 			}
 		case "string":
 			propertyData = &PropertyStringData{
-				value: property.Data.Default.(string),
+				value:               property.Data.Default.(string),
+				PropertyGeneralData: &PropertyGeneralData{},
 			}
 		}
 

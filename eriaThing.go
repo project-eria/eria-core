@@ -45,3 +45,16 @@ func (t *EriaThing) GetPropertyValue(property string) interface{} {
 	}
 	return nil
 }
+
+func (t *EriaThing) AddChangeCallBack(property string, f func(interface{})) {
+	if t == nil {
+		zlog.Error().Msg("[core:AddChangeCallBack] nil thing")
+		return
+	}
+
+	if propertyData, in := t.propertyHandlers[property]; in {
+		propertyData.AddChangeCallBack(f)
+	} else {
+		zlog.Error().Str("thing", t.ref).Str("property", property).Msg("[core:GetPropertyValue] thing property handler not found")
+	}
+}
