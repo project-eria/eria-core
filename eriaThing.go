@@ -19,7 +19,7 @@ func (t *EriaThing) SetPropertyValue(property string, value interface{}) bool {
 	if propertyData, in := t.propertyHandlers[property]; in {
 		changed, err := propertyData.Set(value)
 		if err != nil {
-			zlog.Error().Str("thing", t.ref).Str("property", property).Err(err).Msg("[core:SetPropertyValue]")
+			zlog.Error().Str("thing", t.ref).Str("property", property).Interface("value", value).Err(err).Msg("[core:SetPropertyValue]")
 		}
 		if changed {
 			zlog.Trace().Str("thing", t.ref).Str("property", property).Interface("value", value).Msg("[core:SetPropertyValue] value changed")
