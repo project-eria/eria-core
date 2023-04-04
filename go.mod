@@ -3,7 +3,7 @@ module github.com/project-eria/eria-core
 go 1.19
 
 require (
-	github.com/project-eria/go-wot v1.2.1
+	github.com/project-eria/go-wot v1.2.2
 	github.com/rs/zerolog v1.29.0
 	gopkg.in/yaml.v3 v3.0.1
 )
