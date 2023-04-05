@@ -18,6 +18,7 @@ var (
 	// Version is a placeholder that will receive the git tag version during build time
 	// go build -v -ldflags "-X github.com/project-eria/eria-core.AppVersion=vx.x.x
 	AppVersion  = "-"
+	BuildDate   = "-"
 	CoreVersion = "-"
 	_logLevel   = zerolog.InfoLevel
 	_configPath *string
@@ -35,7 +36,7 @@ func Init(appName string) {
 
 	// Show version (-v)
 	if *showVersion {
-		fmt.Printf("%s\n", AppVersion)
+		fmt.Printf("%s (%s)\n", AppVersion, BuildDate)
 		os.Exit(0)
 	}
 

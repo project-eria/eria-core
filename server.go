@@ -156,7 +156,7 @@ func getPropertyWriteHandler(propertyData PropertyData) producer.PropertyWriteHa
 
 func (s *EriaServer) StartServer() {
 	addr := fmt.Sprintf("%s:%d", s.host, s.port)
-	httpServer := protocolHttp.NewServer(addr, s.exposedAddr, _appName, _appName+" "+AppVersion)
+	httpServer := protocolHttp.NewServer(addr, s.exposedAddr, _appName, fmt.Sprintf("%s %s (%s)", _appName, AppVersion, BuildDate))
 	wsServer := protocolWebSocket.NewServer(httpServer)
 	// wsServer Needs to be added BEFORE httpServer,
 	// in order to call the .Use(WS) middleware, before the .Get(HTTP)
