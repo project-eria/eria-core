@@ -55,6 +55,7 @@ func Init(appName string) {
 	zlog.Info().Stringer("log level", _logLevel).Msg("[core:Init] Set log level")
 
 	// Get EriaCore version
+	// Based on https://stackoverflow.com/questions/54890161/how-to-get-go-detailed-build-logs-with-all-used-packages-in-gopath-and-go-modu/54890460#54890460
 	bi, ok := debug.ReadBuildInfo()
 	if !ok {
 		zlog.Error().Msg("[core:NewServer] Getting build info failed (not in module mode?)!")

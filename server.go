@@ -100,6 +100,13 @@ func (s *EriaServer) AddThing(ref string, td *thing.Thing) (*EriaThing, error) {
 				value:               property.Data.Default.(string),
 				PropertyGeneralData: &PropertyGeneralData{},
 			}
+		case "object":
+			propertyData = &PropertyObjectData{
+				value:               property.Data.Default.(map[string]interface{}),
+				PropertyGeneralData: &PropertyGeneralData{},
+			}
+		default:
+			zlog.Error().Str("type", property.Type).Msg("[core:AddThing] data type not implmented")
 		}
 
 		eriaThing.propertyHandlers[key] = propertyData

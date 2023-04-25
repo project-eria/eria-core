@@ -1,6 +1,8 @@
 package eria
 
 import (
+	"bytes"
+	"encoding/json"
 	"errors"
 	"sync"
 
@@ -137,6 +139,39 @@ func (p *PropertyStringData) Set(value interface{}) (bool, error) {
 }
 
 func (p *PropertyStringData) Get() interface{} {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	return p.value
+}
+
+// Object
+type PropertyObjectData struct {
+	value map[string]interface{}
+	*PropertyGeneralData
+}
+
+func (p *PropertyObjectData) Set(value interface{}) (bool, error) {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	var changed bool
+	if newValue, ok := value.(map[string]interface{}); ok {
+		newJson, err := json.Marshal(newValue)
+		if err != nil {
+			return false, errors.New("provided data can't be decoded")
+		}
+		oldJson, _ := json.Marshal(p.value)
+		if !bytes.Equal(newJson, oldJson) {
+			p.value = newValue
+			changed = true
+			p.emitChangeCallback(newValue)
+		}
+		return changed, nil
+	} else {
+		return false, errors.New("provided data is not type object")
+	}
+}
+
+func (p *PropertyObjectData) Get() interface{} {
 	p.mu.Lock()
 	defer p.mu.Unlock()
 	return p.value

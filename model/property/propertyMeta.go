@@ -7,8 +7,8 @@ type Meta struct {
 	ReadOnly    bool
 	Unit        string
 	Enum        []interface{}
-	Minimum     int16
-	Maximum     int16
+	Minimum     int
+	Maximum     int
 	MinLength   uint16
 	MaxLength   uint16
 	Pattern     string

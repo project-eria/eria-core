@@ -1,9 +1,9 @@
 module github.com/project-eria/eria-core
 
-go 1.19
+go 1.20
 
 require (
-	github.com/project-eria/go-wot v1.2.2
+	github.com/project-eria/go-wot v1.3.0
 	github.com/rs/zerolog v1.29.0
 	gopkg.in/yaml.v3 v3.0.1
 )
@@ -30,7 +30,7 @@ require (
 	golang.org/x/sys v0.6.0 // indirect
 )
 
-// replace github.com/project-eria/go-wot => ../go-wot
+//replace github.com/project-eria/go-wot => ../go-wot
 
 retract (
 	v0.3.2
