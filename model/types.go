@@ -4,6 +4,7 @@ import (
 	actionModel "github.com/project-eria/eria-core/model/action"
 	eventModel "github.com/project-eria/eria-core/model/event"
 	propertyModel "github.com/project-eria/eria-core/model/property"
+	"github.com/project-eria/go-wot/dataSchema"
 )
 
 type Model struct {
@@ -16,12 +17,15 @@ type Model struct {
 type ModelProperty struct {
 	DefaultValue interface{}
 	Meta         propertyModel.Meta
+	UriVariables map[string]dataSchema.Data
 }
 
 type ModelEvent struct {
-	Meta eventModel.Meta
+	Meta         eventModel.Meta
+	UriVariables map[string]dataSchema.Data
 }
 
 type ModelAction struct {
-	Meta actionModel.Meta
+	Meta         actionModel.Meta
+	UriVariables map[string]dataSchema.Data
 }

@@ -23,7 +23,7 @@ func (t *EriaThing) SetPropertyValue(property string, value interface{}) bool {
 		}
 		if changed {
 			zlog.Trace().Str("thing", t.ref).Str("property", property).Interface("value", value).Msg("[core:SetPropertyValue] value changed")
-			t.EmitPropertyChange(property)
+			t.EmitPropertyChange(property, map[string]string{})
 			return true
 		}
 	} else {

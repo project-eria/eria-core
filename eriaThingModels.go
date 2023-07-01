@@ -48,19 +48,19 @@ func AddModel(t *thing.Thing, modelId string, postfix string) error {
 
 	for key, property := range modelType.Properties {
 		id := key + postfix
-		if _, err := AddProperty(t, id, property.DefaultValue, property.Meta); err != nil {
+		if _, err := AddProperty(t, id, property.DefaultValue, property.Meta, property.UriVariables); err != nil {
 			return err
 		}
 	}
 	for key, event := range modelType.Events {
 		id := key + postfix
-		if _, err := AddEvent(t, id, event.Meta); err != nil {
+		if _, err := AddEvent(t, id, event.Meta, event.UriVariables); err != nil {
 			return err
 		}
 	}
 	for key, action := range modelType.Actions {
 		id := key + postfix
-		if _, err := AddAction(t, id, action.Meta); err != nil {
+		if _, err := AddAction(t, id, action.Meta, action.UriVariables); err != nil {
 			return err
 		}
 	}
@@ -68,7 +68,7 @@ func AddModel(t *thing.Thing, modelId string, postfix string) error {
 	return nil
 }
 
-func AddAction(t *thing.Thing, id string, meta actionModel.Meta) (*interaction.Action, error) {
+func AddAction(t *thing.Thing, id string, meta actionModel.Meta, uriVariables map[string]dataSchema.Data) (*interaction.Action, error) {
 	zlog.Trace().Str("action", id).Msg("[thing:AddAction] Adding action")
 	action := interaction.NewAction(
 		id,
@@ -83,7 +83,7 @@ func AddAction(t *thing.Thing, id string, meta actionModel.Meta) (*interaction.A
 }
 
 // AddProperty return an property from schema @type
-func AddProperty(t *thing.Thing, id string, defaultValue interface{}, meta propertyModel.Meta) (*interaction.Property, error) {
+func AddProperty(t *thing.Thing, id string, defaultValue interface{}, meta propertyModel.Meta, uriVariables map[string]dataSchema.Data) (*interaction.Property, error) {
 	zlog.Trace().Str("property", id).Msg("[thing:AddProperty] Adding property")
 	var data dataSchema.Data
 	switch meta.Type {
@@ -119,6 +119,7 @@ func AddProperty(t *thing.Thing, id string, defaultValue interface{}, meta prope
 		false,
 		false,
 		true,
+		uriVariables,
 		data,
 	)
 	t.AddProperty(property)
@@ -126,7 +127,7 @@ func AddProperty(t *thing.Thing, id string, defaultValue interface{}, meta prope
 	return property, nil
 }
 
-func AddEvent(t *thing.Thing, id string, meta eventModel.Meta) (*interaction.Event, error) {
+func AddEvent(t *thing.Thing, id string, meta eventModel.Meta, uriVariables map[string]dataSchema.Data) (*interaction.Event, error) {
 	zlog.Trace().Str("event", id).Msg("[thing:AddEvent] Adding event")
 	event := interaction.NewEvent(
 		id,
