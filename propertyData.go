@@ -1,26 +1,19 @@
 package eria
 
 import (
-	"bytes"
-	"encoding/json"
-	"errors"
 	"sync"
 
 	zlog "github.com/rs/zerolog/log"
 )
 
-type PropertyData interface {
-	Set(interface{}) (bool, error)
-	Get() interface{}
-	AddChangeCallBack(func(interface{}))
-}
-
-type PropertyGeneralData struct {
+type PropertyData struct {
+	value           interface{}
+	valueType       string
 	mu              sync.RWMutex
 	changeCallbacks []func(interface{})
 }
 
-func (p *PropertyGeneralData) AddChangeCallBack(f func(interface{})) {
+func (p *PropertyData) AddChangeCallBack(f func(interface{})) {
 	if p == nil {
 		zlog.Error().Msg("[core:AddChangeCallBack] nil property data")
 		return
@@ -28,151 +21,49 @@ func (p *PropertyGeneralData) AddChangeCallBack(f func(interface{})) {
 	p.changeCallbacks = append(p.changeCallbacks, f)
 }
 
-func (p *PropertyGeneralData) emitChangeCallback(value interface{}) {
+func (p *PropertyData) emitChangeCallback(value interface{}) {
 	for _, f := range p.changeCallbacks {
 		go f(value)
 	}
 }
 
-// Boolean
-type PropertyBooleanData struct {
-	value bool
-	*PropertyGeneralData
-}
-
-func (p *PropertyBooleanData) Set(value interface{}) (bool, error) {
-	var changed bool
-	if newValue, ok := value.(bool); ok {
-		if p.value != newValue {
-			p.value = newValue
-			changed = true
-			p.emitChangeCallback(newValue)
-		}
-		return changed, nil
-	} else {
-		return false, errors.New("provided data is not type bool")
+func (p *PropertyData) Set(value interface{}) (bool, error) {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	// TODO check if value matches data criterias
+	var changed = p.valueType == "object" || p.valueType == "array" || p.value != value // We don't compare complex objects for changes
+	if changed {
+		p.value = value
+		p.emitChangeCallback(value)
 	}
+	return changed, nil
 }
 
-func (p *PropertyBooleanData) Get() interface{} {
+func (p *PropertyData) Get() interface{} {
 	p.mu.Lock()
 	defer p.mu.Unlock()
 	return p.value
 }
 
-// Integer
-type PropertyIntegerData struct {
-	value int
-	*PropertyGeneralData
-}
+// // Object
 
-func (p *PropertyIntegerData) Set(value interface{}) (bool, error) {
-	p.mu.Lock()
-	defer p.mu.Unlock()
-	var changed bool
-	if newValue, ok := value.(int); ok {
-		if p.value != newValue {
-			p.value = newValue
-			changed = true
-			p.emitChangeCallback(newValue)
-		}
-		return changed, nil
-	} else {
-		return false, errors.New("provided data is not type int")
-	}
-}
-
-func (p *PropertyIntegerData) Get() interface{} {
-	p.mu.Lock()
-	defer p.mu.Unlock()
-	return p.value
-}
-
-// Number
-type PropertyNumberData struct {
-	value float64
-	*PropertyGeneralData
-}
-
-func (p *PropertyNumberData) Set(value interface{}) (bool, error) {
-	p.mu.Lock()
-	defer p.mu.Unlock()
-	var changed bool
-	if newValue, ok := value.(float64); ok {
-		if p.value != newValue {
-			p.value = newValue
-			changed = true
-			p.emitChangeCallback(newValue)
-		}
-		return changed, nil
-	} else {
-		return false, errors.New("provided data is not type float64")
-	}
-}
-
-func (p *PropertyNumberData) Get() interface{} {
-	p.mu.Lock()
-	defer p.mu.Unlock()
-	return p.value
-}
-
-// String
-type PropertyStringData struct {
-	value string
-	*PropertyGeneralData
-}
-
-func (p *PropertyStringData) Set(value interface{}) (bool, error) {
-	p.mu.Lock()
-	defer p.mu.Unlock()
-	var changed bool
-	if newValue, ok := value.(string); ok {
-		if p.value != newValue {
-			p.value = newValue
-			changed = true
-			p.emitChangeCallback(newValue)
-		}
-		return changed, nil
-	} else {
-		return false, errors.New("provided data is not type string")
-	}
-}
-
-func (p *PropertyStringData) Get() interface{} {
-	p.mu.Lock()
-	defer p.mu.Unlock()
-	return p.value
-}
-
-// Object
-type PropertyObjectData struct {
-	value map[string]interface{}
-	*PropertyGeneralData
-}
-
-func (p *PropertyObjectData) Set(value interface{}) (bool, error) {
-	p.mu.Lock()
-	defer p.mu.Unlock()
-	var changed bool
-	if newValue, ok := value.(map[string]interface{}); ok {
-		newJson, err := json.Marshal(newValue)
-		if err != nil {
-			return false, errors.New("provided data can't be decoded")
-		}
-		oldJson, _ := json.Marshal(p.value)
-		if !bytes.Equal(newJson, oldJson) {
-			p.value = newValue
-			changed = true
-			p.emitChangeCallback(newValue)
-		}
-		return changed, nil
-	} else {
-		return false, errors.New("provided data is not type object")
-	}
-}
-
-func (p *PropertyObjectData) Get() interface{} {
-	p.mu.Lock()
-	defer p.mu.Unlock()
-	return p.value
-}
+// func (p *PropertyObjectData) Set(value interface{}) (bool, error) {
+// 	p.mu.Lock()
+// 	defer p.mu.Unlock()
+// 	var changed bool
+// 	if newValue, ok := value.(map[string]interface{}); ok {
+// 		newJson, err := json.Marshal(newValue)
+// 		if err != nil {
+// 			return false, errors.New("provided data can't be decoded")
+// 		}
+// 		oldJson, _ := json.Marshal(p.value)
+// 		if !bytes.Equal(newJson, oldJson) {
+// 			p.value = newValue
+// 			changed = true
+// 			p.emitChangeCallback(newValue)
+// 		}
+// 		return changed, nil
+// 	} else {
+// 		return false, errors.New("provided data is not type object")
+// 	}
+// }

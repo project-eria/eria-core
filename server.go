@@ -73,93 +73,43 @@ func (s *EriaServer) AddThing(ref string, td *thing.Thing) (*EriaThing, error) {
 	exposedThing := s.Produce(ref, td)
 	eriaThing := &EriaThing{
 		ref:              ref,
-		propertyHandlers: map[string]PropertyData{},
+		propertyHandlers: map[string]*PropertyData{},
 		ExposedThing:     exposedThing,
 	}
 	for key, property := range td.Properties {
 		property := property // Copy https://go.dev/doc/faq#closures_and_goroutines
-		var propertyData PropertyData
-		switch property.Type {
-		case "boolean":
-			propertyData = &PropertyBooleanData{
-				value:               property.Data.Default.(bool),
-				PropertyGeneralData: &PropertyGeneralData{},
-			}
-		case "integer":
-			propertyData = &PropertyIntegerData{
-				value:               property.Data.Default.(int),
-				PropertyGeneralData: &PropertyGeneralData{},
-			}
-		case "number":
-			propertyData = &PropertyNumberData{
-				value:               property.Data.Default.(float64),
-				PropertyGeneralData: &PropertyGeneralData{},
-			}
-		case "string":
-			propertyData = &PropertyStringData{
-				value:               property.Data.Default.(string),
-				PropertyGeneralData: &PropertyGeneralData{},
-			}
-		case "object":
-			propertyData = &PropertyObjectData{
-				value:               property.Data.Default.(map[string]interface{}),
-				PropertyGeneralData: &PropertyGeneralData{},
-			}
-		default:
-			zlog.Error().Str("type", property.Type).Msg("[core:AddThing] data type not implmented")
+		var propertyData = &PropertyData{
+			value:     property.Data.Default,
+			valueType: property.Type,
 		}
 
 		eriaThing.propertyHandlers[key] = propertyData
-		exposedThing.SetPropertyReadHandler(key, getPropertyReadHandler(propertyData))
-		exposedThing.SetPropertyWriteHandler(key, getPropertyWriteHandler(propertyData))
+		exposedThing.SetPropertyReadHandler(key, getPropertyDefaultReadHandler(propertyData))
+		exposedThing.SetPropertyWriteHandler(key, getPropertyDefaultWriteHandler(propertyData))
 	}
 	s.things[ref] = eriaThing
 	return eriaThing, nil
 }
 
-func getPropertyReadHandler(propertyData PropertyData) producer.PropertyReadHandler {
-	return func(t *producer.ExposedThing, name string) (interface{}, error) {
-		if _, ok := t.ExposedProperties[name]; ok {
-			value := propertyData.Get()
-			zlog.Trace().Str("property", name).Interface("value", value).Msg("[core:propertyReadHandler] Value get")
-			return value, nil
-		}
-		return nil, fmt.Errorf("property %s not found", name)
+func getPropertyDefaultReadHandler(propertyData *PropertyData) producer.PropertyReadHandler {
+	return func(t *producer.ExposedThing, name string, params map[string]string) (interface{}, error) {
+		value := propertyData.Get()
+		zlog.Trace().Str("property", name).Interface("value", value).Msg("[core:propertyReadHandler] Value get")
+		return value, nil
 	}
 }
 
-func getPropertyWriteHandler(propertyData PropertyData) producer.PropertyWriteHandler {
-	return func(t *producer.ExposedThing, name string, value interface{}) error {
-		if property, ok := t.ExposedProperties[name]; ok {
-			if err := property.Data.Check(value); err != nil {
-				zlog.Error().Str("property", name).Interface("value", value).Err(err).Msg("[core:propertyWriteHandler]")
-				return err
-			}
-			_, err := propertyData.Set(value)
-			if err != nil {
-				zlog.Error().Str("property", name).Interface("value", value).Err(err).Msg("[core:propertyWriteHandler]")
-				return err
-			}
-			zlog.Trace().Str("property", name).Interface("value", value).Msg("[core:propertyWriteHandler] Value set")
-			if err := t.EmitPropertyChange(name); err != nil {
-				zlog.Error().Str("property", name).Interface("value", value).Err(err).Msg("[core:propertyWriteHandler]")
-				return err
-			}
-			return nil
+func getPropertyDefaultWriteHandler(propertyData *PropertyData) producer.PropertyWriteHandler {
+	return func(t *producer.ExposedThing, name string, value interface{}, params map[string]string) error {
+		_, err := propertyData.Set(value)
+		if err != nil {
+			zlog.Error().Str("property", name).Interface("value", value).Err(err).Msg("[core:propertyWriteHandler]")
+			return err
 		}
-		return fmt.Errorf("property %s not found", name)
+		zlog.Trace().Str("property", name).Interface("value", value).Msg("[core:propertyWriteHandler] Value set")
+		return nil
 	}
 }
-
-// TODO Remove
-// func (s *EriaServer) SetPropertyValue(ref string, property string, value interface{}) bool {
-// 	if thing, in := s.things[ref]; in {
-// 		return thing.SetPropertyValue(property, value)
-// 	} else {
-// 		zlog.Error().Str("thing", ref).Msg("[core] thing not found")
-// 	}
-// 	return false
-// }
 
 func (s *EriaServer) StartServer() {
 	addr := fmt.Sprintf("%s:%d", s.host, s.port)

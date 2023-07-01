@@ -7,7 +7,7 @@ import (
 
 type EriaThing struct {
 	ref              string
-	propertyHandlers map[string]PropertyData
+	propertyHandlers map[string]*PropertyData
 	*producer.ExposedThing
 }
 
