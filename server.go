@@ -71,44 +71,9 @@ func NewThingDescription(urn string, tdVersion string, title string, description
 
 func (s *EriaServer) AddThing(ref string, td *thing.Thing) (*EriaThing, error) {
 	exposedThing := s.Produce(ref, td)
-	eriaThing := &EriaThing{
-		ref:              ref,
-		propertyHandlers: map[string]*PropertyData{},
-		ExposedThing:     exposedThing,
-	}
-	for key, property := range td.Properties {
-		property := property // Copy https://go.dev/doc/faq#closures_and_goroutines
-		var propertyData = &PropertyData{
-			value:     property.Data.Default,
-			valueType: property.Type,
-		}
-
-		eriaThing.propertyHandlers[key] = propertyData
-		exposedThing.SetPropertyReadHandler(key, getPropertyDefaultReadHandler(propertyData))
-		exposedThing.SetPropertyWriteHandler(key, getPropertyDefaultWriteHandler(propertyData))
-	}
+	eriaThing := NewEriaThing(ref, exposedThing)
 	s.things[ref] = eriaThing
 	return eriaThing, nil
-}
-
-func getPropertyDefaultReadHandler(propertyData *PropertyData) producer.PropertyReadHandler {
-	return func(t *producer.ExposedThing, name string, params map[string]string) (interface{}, error) {
-		value := propertyData.Get()
-		zlog.Trace().Str("property", name).Interface("value", value).Msg("[core:propertyReadHandler] Value get")
-		return value, nil
-	}
-}
-
-func getPropertyDefaultWriteHandler(propertyData *PropertyData) producer.PropertyWriteHandler {
-	return func(t *producer.ExposedThing, name string, value interface{}, params map[string]string) error {
-		_, err := propertyData.Set(value)
-		if err != nil {
-			zlog.Error().Str("property", name).Interface("value", value).Err(err).Msg("[core:propertyWriteHandler]")
-			return err
-		}
-		zlog.Trace().Str("property", name).Interface("value", value).Msg("[core:propertyWriteHandler] Value set")
-		return nil
-	}
 }
 
 func (s *EriaServer) StartServer() {
@@ -121,6 +86,7 @@ func (s *EriaServer) StartServer() {
 	s.AddServer(httpServer)
 
 	s.Expose()
+	s.Start()
 	go func() {
 		<-s.ctx.Done()
 		s.Stop()

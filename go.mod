@@ -30,7 +30,7 @@ require (
 	golang.org/x/sys v0.6.0 // indirect
 )
 
-//replace github.com/project-eria/go-wot => ../go-wot
+replace github.com/project-eria/go-wot => ../go-wot
 
 retract (
 	v0.3.2
