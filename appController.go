@@ -22,7 +22,7 @@ func (s *EriaServer) AddAppController(instance string) {
 
 	// Add Security
 	noSecurityScheme := securityScheme.NewNoSecurity()
-	eriaAppControllerTd.AddSecurity("no_sec", noSecurityScheme)
+	eriaAppControllerTd.AddSecurity("nosec_sc", noSecurityScheme)
 
 	eriaAppControllerThing, err := s.AddThing("eria", eriaAppControllerTd)
 	if err != nil {
