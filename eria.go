@@ -9,7 +9,6 @@ import (
 	"syscall"
 	"time"
 
-	configmanager "github.com/project-eria/eria-core/config-manager"
 	"github.com/rs/zerolog"
 	zlog "github.com/rs/zerolog/log"
 )
@@ -94,23 +93,6 @@ func Init(appName string) {
 			CoreVersion = dep.Version
 		}
 	}
-}
-
-// LoadConfig Loads the config file into a struct
-func LoadConfig(config interface{}) *configmanager.ConfigManager {
-	cm, err := configmanager.Init(*_configPath, config)
-	if err != nil {
-		if configmanager.IsFileMissing(err) {
-			zlog.Fatal().Msg("[core:loadconfig] Config file do not exists...")
-		} else {
-			zlog.Fatal().Str("filePath", *_configPath).Err(err).Msg("[core:loadconfig]")
-		}
-	}
-
-	if err := cm.Load(); err != nil {
-		zlog.Fatal().Err(err).Msg("[core:loadconfig]")
-	}
-	return cm
 }
 
 // WaitForSignal Wait for any signal and runs all the defer

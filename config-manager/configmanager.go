@@ -14,9 +14,9 @@ import (
 
 // ConfigManager struct
 type ConfigManager struct {
-	filepath string
-	yaml     []byte
-	s        interface{}
+	filepath   string
+	config     interface{}
+	eriaConfig interface{}
 }
 
 const (
@@ -24,10 +24,11 @@ const (
 )
 
 // Init config manager with filename, and a struct
-func Init(filePath string, s interface{}) (*ConfigManager, error) {
+func Init(filePath string, config interface{}, eriaConfig interface{}) (*ConfigManager, error) {
 	configManager := &ConfigManager{
-		filepath: filePath,
-		s:        s,
+		filepath:   filePath,
+		config:     config,
+		eriaConfig: eriaConfig,
 	}
 	zlog.Trace().Str("filePath", filePath).Msg("[configmanager:Init] Looking for file")
 	if _, err := os.Stat(filePath); os.IsNotExist(err) {
@@ -51,20 +52,28 @@ func (c *ConfigManager) Load() error {
 		return err
 	}
 
-	// Save as yaml string
-	c.yaml = bytes
-
-	if err := yaml.Unmarshal(bytes, c.s); err != nil {
+	// Process the eria inner config
+	if err := yaml.Unmarshal(bytes, c.eriaConfig); err != nil {
 		// TODO What to do if not valid file
 		return err
 	}
-
-	if err := processTags(c.s); err != nil {
+	if err := processTags(c.eriaConfig); err != nil {
 		return err
 	}
+
+	// Process the app config
+	if err := yaml.Unmarshal(bytes, c.config); err != nil {
+		// TODO What to do if not valid file
+		return err
+	}
+	if err := processTags(c.config); err != nil {
+		return err
+	}
+	// Display the config if trace logs enabled
 	if e := zlog.Trace(); e.Enabled() {
-		content, _ := json.MarshalIndent(c.s, "", "  ")
-		e.Msgf("[configmanager:Load] %s", string(content))
+		eriaContent, _ := json.MarshalIndent(c.eriaConfig, "", "  ")
+		content, _ := json.MarshalIndent(c.config, "", "  ")
+		e.Msgf("[configmanager:Load] %s\n%s", string(eriaContent), string(content))
 	}
 	return nil
 }
@@ -73,7 +82,7 @@ func (c *ConfigManager) Load() error {
 func (c *ConfigManager) Save() error {
 	zlog.Trace().Str("filePath", c.filepath).Msg("[configmanager:Load] Saving config")
 
-	bytes, err := yaml.Marshal(c.s)
+	bytes, err := yaml.Marshal(c.config)
 	if err != nil {
 		return err
 	}
