@@ -1,4 +1,4 @@
-package eria
+package eriaproducer
 
 import (
 	"github.com/project-eria/go-wot/producer"

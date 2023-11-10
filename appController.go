@@ -3,6 +3,8 @@ package eria
 import (
 	"errors"
 
+	"github.com/project-eria/eria-core/model"
+	eriaproducer "github.com/project-eria/eria-core/producer"
 	"github.com/project-eria/go-wot/producer"
 	"github.com/project-eria/go-wot/securityScheme"
 	"github.com/project-eria/go-wot/thing"
@@ -10,13 +12,13 @@ import (
 	zlog "github.com/rs/zerolog/log"
 )
 
-func (s *EriaServer) AddAppController(instance string) {
+func AddAppController(p *eriaproducer.EriaProducer, instance string) {
 	eriaAppControllerTd, err := thing.New("eria:app:controler:"+instance, CoreVersion, "EriaAppController", "Eria App Controller", nil)
 	if err != nil {
 		zlog.Panic().Err(err).Msg("[core] Can't create app controller thing")
 	}
 
-	if err := AddModel(eriaAppControllerTd, "EriaAppController", ""); err != nil {
+	if err := model.AddModel(eriaAppControllerTd, "EriaAppController", ""); err != nil {
 		zlog.Panic().Err(err).Msg("[core] Can't add controller thing model")
 	}
 
@@ -24,7 +26,7 @@ func (s *EriaServer) AddAppController(instance string) {
 	noSecurityScheme := securityScheme.NewNoSecurity()
 	eriaAppControllerTd.AddSecurity("nosec_sc", noSecurityScheme)
 
-	eriaAppControllerThing, err := s.AddThing("eria", eriaAppControllerTd)
+	eriaAppControllerThing, err := p.AddThing("eria", eriaAppControllerTd)
 	if err != nil {
 		zlog.Panic().Err(err).Msg("[core] Can't add app controller")
 	}

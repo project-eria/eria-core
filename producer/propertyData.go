@@ -1,4 +1,4 @@
-package eria
+package eriaproducer
 
 import (
 	"sync"

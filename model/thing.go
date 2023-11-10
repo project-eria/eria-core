@@ -1,9 +1,8 @@
-package eria
+package model
 
 import (
 	"errors"
 
-	"github.com/project-eria/eria-core/model"
 	actionModel "github.com/project-eria/eria-core/model/action"
 	eventModel "github.com/project-eria/eria-core/model/event"
 	propertyModel "github.com/project-eria/eria-core/model/property"
@@ -41,7 +40,7 @@ func AddModels(t *thing.Thing, modelIds []string, postfix string) error {
 // AddModel add a capability to a thing using schema @type
 func AddModel(t *thing.Thing, modelId string, postfix string) error {
 	zlog.Info().Str("model", modelId).Msg("[thing:AddModel] Adding model")
-	modelType, modelExists := model.Models[modelId]
+	modelType, modelExists := Models[modelId]
 	if !modelExists {
 		return errors.New("Model '" + modelId + "' not found")
 	}

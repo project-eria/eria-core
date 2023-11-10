@@ -1,4 +1,4 @@
-package eria
+package eriaproducer
 
 import (
 	"context"
@@ -11,15 +11,17 @@ import (
 	"github.com/project-eria/go-wot/producer"
 	"github.com/project-eria/go-wot/protocolHttp"
 	"github.com/project-eria/go-wot/protocolWebSocket"
-	"github.com/project-eria/go-wot/securityScheme"
 	"github.com/project-eria/go-wot/thing"
 	zlog "github.com/rs/zerolog/log"
 )
 
-type EriaServer struct {
+type EriaProducer struct {
 	host        string
 	port        uint
 	exposedAddr string
+	appName     string
+	appVersion  string
+	buildDate   string
 	wait        sync.WaitGroup
 	cancel      context.CancelFunc
 	ctx         context.Context
@@ -27,69 +29,50 @@ type EriaServer struct {
 	*producer.Producer
 }
 
-func NewServer(host string, port uint, exposedAddr string, instance string) *EriaServer {
+func New(host string, port uint, exposedAddr string, appName string, appVersion string, buildDate string) *EriaProducer {
 	ctx, cancel := context.WithCancel(context.Background())
 
-	server := &EriaServer{
+	eriaProducer := &EriaProducer{
 		host:        host,
 		port:        port,
 		exposedAddr: exposedAddr,
+		appName:     appName,
+		appVersion:  appVersion,
+		buildDate:   buildDate,
 		ctx:         ctx,
 		cancel:      cancel,
 		things:      map[string]*EriaThing{},
 	}
-	p := producer.New(&server.wait)
-	server.Producer = p
+	p := producer.New(&eriaProducer.wait)
+	eriaProducer.Producer = p
 
-	server.AddAppController(instance)
-
-	return server
+	return eriaProducer
 }
 
-func NewThingDescription(urn string, tdVersion string, title string, description string, capabilities []string) (*thing.Thing, error) {
-	td, err := NewThingFromModels(
-		urn,
-		tdVersion,
-		title,
-		description,
-		capabilities,
-	)
+func (p *EriaProducer) AddThing(ref string, td *thing.Thing) (*EriaThing, error) {
+	// Add Versions
+	td.AddVersion("schema:softwareVersion", p.appVersion)
 
-	if err != nil {
-		return nil, err
-	}
-	//Add Versions
-	td.AddContext("schema", "https://schema.org/")
-	td.AddVersion("schema:softwareVersion", AppVersion)
-
-	// Add Security
-	noSecurityScheme := securityScheme.NewNoSecurity()
-	td.AddSecurity("no_sec", noSecurityScheme)
-
-	return td, err
-}
-
-func (s *EriaServer) AddThing(ref string, td *thing.Thing) (*EriaThing, error) {
-	exposedThing := s.Produce(ref, td)
+	exposedThing := p.Produce(ref, td)
 	eriaThing := NewEriaThing(ref, exposedThing)
-	s.things[ref] = eriaThing
+	p.things[ref] = eriaThing
 	return eriaThing, nil
 }
 
-func (s *EriaServer) StartServer() {
-	addr := fmt.Sprintf("%s:%d", s.host, s.port)
-	httpServer := protocolHttp.NewServer(addr, s.exposedAddr, _appName, fmt.Sprintf("%s %s (%s)", _appName, AppVersion, BuildDate))
+func (p *EriaProducer) StartServer() {
+	addr := fmt.Sprintf("%s:%d", p.host, p.port)
+	httpServer := protocolHttp.NewServer(addr, p.exposedAddr, p.appName, fmt.Sprintf("%s %s (%s)", p.appName, p.appVersion, p.buildDate))
 	wsServer := protocolWebSocket.NewServer(httpServer)
 	// wsServer Needs to be added BEFORE httpServer,
 	// in order to call the .Use(WS) middleware, before the .Get(HTTP)
-	s.AddServer(wsServer)
-	s.AddServer(httpServer)
+	p.AddServer(wsServer)
+	p.AddServer(httpServer)
 
-	s.Expose()
-	s.Start()
+	p.Expose()
+	p.Start()
 	go func() {
-		<-s.ctx.Done()
-		s.Stop()
+		<-p.ctx.Done()
+		p.Stop()
 		//		_wait.Done()
 	}()
 
@@ -105,11 +88,11 @@ func (s *EriaServer) StartServer() {
 	// Block until keyboard interrupt is received.
 	<-c
 	zlog.Info().Msg("[core:WaitForSignal] Keyboard interrupt received, Stopping...")
-	s.cancel()
+	p.cancel()
 	// Wait for the child goroutine to finish, which will only occur when
 	// the child process has stopped and the call to cmd.Wait has returned.
 	// This prevents main() exiting prematurely.
-	s.wait.Wait()
+	p.wait.Wait()
 }
 
 // SetThing register a thing
