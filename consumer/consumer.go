@@ -1,4 +1,4 @@
-package eria
+package eriaconsumer
 
 import (
 	"encoding/json"
@@ -13,26 +13,41 @@ import (
 	zlog "github.com/rs/zerolog/log"
 )
 
-type EriaClient struct {
+type EriaConsumer struct {
 	things map[string]*consumer.ConsumedThing
 	*consumer.Consumer
 }
 
-func NewClient() *EriaClient {
+func New() *EriaConsumer {
 	c := consumer.New()
 	httpClient := protocolHttp.NewClient()
 	c.AddClient(httpClient)
 	wsClient := protocolWebSocket.NewClient()
 	c.AddClient(wsClient)
 
-	return &EriaClient{
+	return &EriaConsumer{
 		things:   map[string]*consumer.ConsumedThing{},
 		Consumer: c,
 	}
 }
 
 // ConnectThing connect a remote thing WS server
-func (c *EriaClient) ConnectThing(url string) (*consumer.ConsumedThing, error) {
+func (c *EriaConsumer) ConnectThing(url string, onConnected func(*consumer.ConsumedThing), onError func(error)) {
+	go func() {
+		thing, err := c.ConnectThingBackoff(url)
+		if err == nil {
+			if onConnected != nil {
+				onConnected(thing)
+			}
+		} else {
+			if onError != nil {
+				onError(err)
+			}
+		}
+	}()
+}
+
+func (c *EriaConsumer) ConnectThingBackoff(url string) (*consumer.ConsumedThing, error) {
 	// A backoff schedule for when and how often to retry failed HTTP
 	// requests. The first element is the time to wait after the
 	// first failure, the second the time to wait after the second
@@ -72,8 +87,6 @@ func (c *EriaClient) ConnectThing(url string) (*consumer.ConsumedThing, error) {
 
 	consumedThing := c.Consume(&td)
 	c.things[td.ID] = consumedThing
-	if err != nil {
-		return nil, err
-	}
+
 	return consumedThing, nil
 }
