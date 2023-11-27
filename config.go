@@ -1,15 +1,18 @@
 package eria
 
 import (
+	"github.com/project-eria/eria-core/automations"
 	configmanager "github.com/project-eria/eria-core/config-manager"
 	zlog "github.com/rs/zerolog/log"
 )
 
 var eriaConfig = struct {
-	Host        string `yaml:"host,omitempty"`
-	Port        uint   `yaml:"port" default:"80"`
-	Location    string `yaml:"location" required:"true"`
-	ExposedAddr string `yaml:"exposedAddr,omitempty"`
+	Host        string                   `yaml:"host,omitempty"`
+	Port        uint                     `yaml:"port" default:"80"`
+	Location    string                   `yaml:"location" required:"true"`
+	ExposedAddr string                   `yaml:"exposedAddr,omitempty"`
+	Automations []automations.Automation `yaml:"automations,omitempty"`
+	ContextsUrl string                   `yaml:"contextsUrl,omitempty"`
 }{}
 
 // LoadConfig Loads the config file into a struct

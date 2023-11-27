@@ -18,7 +18,7 @@ func GetConsumer() *eriaconsumer.EriaConsumer {
 	return eriaConsumer
 }
 
-func ConnectThing(url string, onConnected func(*consumer.ConsumedThing), onError func(error)) {
+func ConnectThing(url string, onConnected func(consumer.ConsumedThing), onError func(error)) {
 	eriaConsumer := GetConsumer()
 	eriaConsumer.ConnectThing(url, onConnected, onError)
 }

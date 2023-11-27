@@ -35,11 +35,11 @@ func AddAppController(p *eriaproducer.EriaProducer, instance string) {
 	eriaAppControllerThing.SetPropertyWriteHandler("logLevel", logLevelWrite)
 }
 
-func logLevelRead(t *producer.ExposedThing, name string, options map[string]string) (interface{}, error) {
+func logLevelRead(t producer.ExposedThing, name string, options map[string]string) (interface{}, error) {
 	return _logLevel.String(), nil
 }
 
-func logLevelWrite(t *producer.ExposedThing, name string, value interface{}, options map[string]string) error {
+func logLevelWrite(t producer.ExposedThing, name string, value interface{}, options map[string]string) error {
 	logLevelStr := value.(string)
 	logLevel, err := zerolog.ParseLevel(logLevelStr)
 	if err != nil {

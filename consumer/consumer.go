@@ -14,7 +14,7 @@ import (
 )
 
 type EriaConsumer struct {
-	things map[string]*consumer.ConsumedThing
+	things map[string]consumer.ConsumedThing // TODO store connected things by urls
 	*consumer.Consumer
 }
 
@@ -26,13 +26,14 @@ func New() *EriaConsumer {
 	c.AddClient(wsClient)
 
 	return &EriaConsumer{
-		things:   map[string]*consumer.ConsumedThing{},
+		things:   map[string]consumer.ConsumedThing{},
 		Consumer: c,
 	}
 }
 
 // ConnectThing connect a remote thing WS server
-func (c *EriaConsumer) ConnectThing(url string, onConnected func(*consumer.ConsumedThing), onError func(error)) {
+func (c *EriaConsumer) ConnectThing(url string, onConnected func(consumer.ConsumedThing), onError func(error)) {
+	// TODO test if already connected
 	go func() {
 		thing, err := c.ConnectThingBackoff(url)
 		if err == nil {
@@ -47,7 +48,7 @@ func (c *EriaConsumer) ConnectThing(url string, onConnected func(*consumer.Consu
 	}()
 }
 
-func (c *EriaConsumer) ConnectThingBackoff(url string) (*consumer.ConsumedThing, error) {
+func (c *EriaConsumer) ConnectThingBackoff(url string) (consumer.ConsumedThing, error) {
 	// A backoff schedule for when and how often to retry failed HTTP
 	// requests. The first element is the time to wait after the
 	// first failure, the second the time to wait after the second

@@ -20,7 +20,7 @@ type ConfigManager struct {
 }
 
 const (
-	eNotFound = "Config file missing"
+	eNotFound = "config file missing"
 )
 
 // Init config manager with filename, and a struct

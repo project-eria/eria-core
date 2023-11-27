@@ -15,7 +15,7 @@ type PropertyData struct {
 
 func (p *PropertyData) AddChangeCallBack(f func(interface{})) {
 	if p == nil {
-		zlog.Error().Msg("[core:AddChangeCallBack] nil property data")
+		zlog.Error().Msg("[eriaproducer:AddChangeCallBack] nil property data")
 		return
 	}
 	p.changeCallbacks = append(p.changeCallbacks, f)
