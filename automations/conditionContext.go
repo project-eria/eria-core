@@ -4,46 +4,58 @@ import (
 	"errors"
 	"regexp"
 	"strings"
-
-	"github.com/project-eria/go-wot/consumer"
+	"time"
 )
 
+type conditionContext struct {
+	context string
+	invert  bool
+}
+
 /*
- *
  * `context/<context name>`
  *	- not: `context/!<context name>`
  */
-func contextCondition(conditionArray []string, contextsThing consumer.ConsumedThing) (bool, error) {
+func NewConditionContext(conditionArray []string) (*conditionContext, error) {
+	if _contextsThing == nil {
+		return nil, errors.New("contexts thing not configured")
+	}
 	// Check if the condition has the correct number of parameters
 	if len(conditionArray) != 2 {
-		return false, errors.New("invalid condition length")
+		return nil, errors.New("invalid condition length")
 	}
 
 	// Check if the context name is valid
 	match, _ := regexp.MatchString(`^!?\w*$`, conditionArray[1])
 	if !match {
-		return false, errors.New("invalid context name")
+		return nil, errors.New("invalid context name")
 	}
 
 	if strings.HasPrefix(conditionArray[1], "!") {
-		// Check if the context is NOT active
-		active, err := contextActive(contextsThing, conditionArray[1][1:])
-		if err != nil {
-			return false, err
-		}
-		return !active, nil
+		// If the context is NOT active
+		return &conditionContext{
+			context: conditionArray[1][1:],
+			invert:  true,
+		}, nil
 	} else {
-		// Check if the context is active
-		active, err := contextActive(contextsThing, conditionArray[1])
-		if err != nil {
-			return false, err
-		}
-		return active, nil
+		// If the context is active
+		return &conditionContext{
+			context: conditionArray[1],
+			invert:  false,
+		}, nil
 	}
 }
 
-func contextActive(contextsThing consumer.ConsumedThing, contextName string) (bool, error) {
-	raw, err := contextsThing.ReadProperty(contextName)
+func (condition *conditionContext) check(time.Time) (bool, error) {
+	active, err := contextActive(condition.context)
+	if err != nil {
+		return false, err
+	}
+	return condition.invert != active, nil
+}
+
+func contextActive(contextName string) (bool, error) {
+	raw, err := _contextsThing.ReadProperty(contextName)
 	if err != nil {
 		return false, err
 	}

@@ -11,6 +11,10 @@ import (
 	"github.com/stretchr/testify/suite"
 )
 
+func handler(interface{}, map[string]string) (interface{}, error) {
+	return nil, nil
+}
+
 type ActionTestSuite struct {
 	suite.Suite
 	exposedThing *mocks.ExposedThing
@@ -35,9 +39,9 @@ func (ts *ActionTestSuite) SetupTest() {
 	ts.exposedThing.On("ExposedAction", "off").Return(nil, errors.New("exposed action not found"))
 }
 
-func (ts *ActionTestSuite) Test_actionExists() {
-	got, err := getAction(ts.exposedThing, []string{"on"})
-	ts.Equal(got, Action{
+func (ts *ActionTestSuite) Test_Exists() {
+	got, err := getAction(ts.exposedThing, "on")
+	ts.Equal(got, &action{
 		Ref:        "on",
 		Handler:    nil,
 		Parameters: make(map[string]interface{}),
@@ -45,21 +49,21 @@ func (ts *ActionTestSuite) Test_actionExists() {
 	ts.Nil(err)
 }
 
-func (ts *ActionTestSuite) Test_actionNotExists() {
-	got, err := getAction(ts.exposedThing, []string{"off"})
-	ts.Equal(got, Action{})
+func (ts *ActionTestSuite) Test_NotExists() {
+	got, err := getAction(ts.exposedThing, "off")
+	ts.Nil(got)
 	ts.EqualError(err, "exposed action not found")
 }
 
-func (ts *ActionTestSuite) Test_actionInvalid() {
-	got, err := getAction(ts.exposedThing, []string{})
-	ts.Equal(got, Action{})
-	ts.EqualError(err, "invalid action length")
+func (ts *ActionTestSuite) Test_Invalid() {
+	got, err := getAction(ts.exposedThing, " ")
+	ts.Nil(got)
+	ts.EqualError(err, "missing action configuration")
 }
 
-func (ts *ActionTestSuite) Test_actionWithParams() {
-	got, err := getAction(ts.exposedThing, []string{"on", "param1=true"})
-	ts.Equal(got, Action{
+func (ts *ActionTestSuite) Test_WithParams() {
+	got, err := getAction(ts.exposedThing, "on|param1=true")
+	ts.Equal(got, &action{
 		Ref:     "on",
 		Handler: nil,
 		Parameters: map[string]interface{}{

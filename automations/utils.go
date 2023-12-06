@@ -25,3 +25,27 @@ func DateToHour(dateStr string) (time.Time, error) {
 	t, _ := time.Parse("15:04:05", hourStr)
 	return t, nil
 }
+
+func HourIsAfter(hourStr1 string, hourStr2 string) (bool, error) {
+	hour1, err := time.Parse("15:04", hourStr1)
+	if err != nil {
+		return false, err
+	}
+	hour2, err := time.Parse("15:04", hourStr2)
+	if err != nil {
+		return false, err
+	}
+	return hour1.After(hour2), nil
+}
+
+func HourIsBefore(hourStr1 string, hourStr2 string) (bool, error) {
+	hour1, err := time.Parse("15:04", hourStr1)
+	if err != nil {
+		return false, err
+	}
+	hour2, err := time.Parse("15:04", hourStr2)
+	if err != nil {
+		return false, err
+	}
+	return hour1.Before(hour2), nil
+}

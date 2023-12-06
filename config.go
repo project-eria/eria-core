@@ -7,12 +7,13 @@ import (
 )
 
 var eriaConfig = struct {
-	Host        string                   `yaml:"host,omitempty"`
-	Port        uint                     `yaml:"port" default:"80"`
-	Location    string                   `yaml:"location" required:"true"`
-	ExposedAddr string                   `yaml:"exposedAddr,omitempty"`
-	Automations []automations.Automation `yaml:"automations,omitempty"`
-	ContextsUrl string                   `yaml:"contextsUrl,omitempty"`
+	Host         string                         `yaml:"host,omitempty"`
+	Port         uint                           `yaml:"port" default:"80"`
+	Location     string                         `yaml:"location" required:"true"`
+	ExposedAddr  string                         `yaml:"exposedAddr,omitempty"`
+	Automations  []automations.AutomationConfig `yaml:"automations,omitempty"`
+	ContextsRef  string                         `yaml:"contextsRef,omitempty"`
+	RemoteThings map[string]string              `yaml:"remoteThings,omitempty"`
 }{}
 
 // LoadConfig Loads the config file into a struct

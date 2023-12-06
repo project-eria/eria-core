@@ -2,17 +2,18 @@ package automations
 
 import (
 	"testing"
-
-	"github.com/stretchr/testify/mock"
-	"github.com/stretchr/testify/suite"
+	"time"
 
 	"github.com/project-eria/go-wot/mocks"
 	"github.com/rs/zerolog"
+	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/suite"
 )
 
 type ContextConditionTestSuite struct {
 	suite.Suite
 	consumedThingMock *mocks.ConsumedThing
+	now               time.Time
 }
 
 func Test_ContextConditionTestSuite(t *testing.T) {
@@ -23,53 +24,107 @@ func (ts *ContextConditionTestSuite) SetupTest() {
 	zerolog.SetGlobalLevel(zerolog.Disabled)
 	consumedThingMock := mocks.ConsumedThing{}
 	ts.consumedThingMock = &consumedThingMock
+	ts.now = time.Date(2000, time.January, 1, 12, 0, 0, 0, time.UTC)
 }
 
-func (ts *ContextConditionTestSuite) Test_contextConditionActive() {
+func (ts *ContextConditionTestSuite) Test_NewNoContextsThing() {
+	_contextsThing = nil
+	got, err := NewConditionContext([]string{"context", "test"})
+	ts.Nil(got)
+	ts.EqualError(err, "contexts thing not configured")
+}
+
+func (ts *ContextConditionTestSuite) Test_NewExistingContextThing() {
 	ts.consumedThingMock.On("ReadProperty", mock.AnythingOfType("string")).Return(true, nil)
-	got, err := contextCondition([]string{"context", "test"}, ts.consumedThingMock)
-	ts.True(got)
+	_contextsThing = ts.consumedThingMock
+	c := &conditionContext{
+		context: "test",
+	}
+	got, err := NewConditionContext([]string{"context", "test"})
+	ts.Equal(c, got)
 	ts.Nil(err)
 }
 
-func (ts *ContextConditionTestSuite) Test_contextConditionNotActive() {
-	ts.consumedThingMock.On("ReadProperty", mock.AnythingOfType("string")).Return(false, nil)
-	got, err := contextCondition([]string{"context", "test"}, ts.consumedThingMock)
-	ts.False(got)
-	ts.Nil(err)
-}
-
-func (ts *ContextConditionTestSuite) Test_contextConditionTooLong() {
-	got, err := contextCondition([]string{"context", "test", "test"}, ts.consumedThingMock)
-	ts.False(got)
+func (ts *ContextConditionTestSuite) Test_NewTooLong() {
+	_contextsThing = ts.consumedThingMock
+	got, err := NewConditionContext([]string{"context", "test", "test"})
+	ts.Nil(got)
 	ts.consumedThingMock.AssertNotCalled(ts.T(), "ReadProperty", mock.AnythingOfType("string"))
 	ts.EqualError(err, "invalid condition length")
 }
 
-func (ts *ContextConditionTestSuite) Test_contextConditionNoName() {
-	got, err := contextCondition([]string{"context"}, ts.consumedThingMock)
-	ts.False(got)
+func (ts *ContextConditionTestSuite) Test_NewNoName() {
+	_contextsThing = ts.consumedThingMock
+	got, err := NewConditionContext([]string{"context"})
+	ts.Nil(got)
 	ts.consumedThingMock.AssertNotCalled(ts.T(), "ReadProperty", mock.AnythingOfType("string"))
 	ts.EqualError(err, "invalid condition length")
 }
 
-func (ts *ContextConditionTestSuite) Test_contextConditionInvalidChars() {
-	got, err := contextCondition([]string{"context", "te!st"}, ts.consumedThingMock)
-	ts.False(got)
+func (ts *ContextConditionTestSuite) Test_NewInvalidChars() {
+	_contextsThing = ts.consumedThingMock
+	got, err := NewConditionContext([]string{"context", "te!st"})
+	ts.Nil(got)
 	ts.consumedThingMock.AssertNotCalled(ts.T(), "ReadProperty", mock.AnythingOfType("string"))
 	ts.EqualError(err, "invalid context name")
 }
 
-func (ts *ContextConditionTestSuite) Test_contextConditionInverted1() {
+func (ts *ContextConditionTestSuite) Test_NewInverted() {
 	ts.consumedThingMock.On("ReadProperty", mock.AnythingOfType("string")).Return(false, nil)
-	got, err := contextCondition([]string{"context", "!test"}, ts.consumedThingMock)
+	_contextsThing = ts.consumedThingMock
+	c := &conditionContext{
+		context: "test",
+		invert:  true,
+	}
+	got, err := NewConditionContext([]string{"context", "!test"})
+	ts.Equal(c, got)
+	ts.Nil(err)
+}
+
+func (ts *ContextConditionTestSuite) Test_CheckContextTrue() {
+	ts.consumedThingMock.On("ReadProperty", mock.AnythingOfType("string")).Return(true, nil)
+	_contextsThing = ts.consumedThingMock
+	c := &conditionContext{
+		context: "test",
+		invert:  false,
+	}
+	got, err := c.check(ts.now)
 	ts.True(got)
 	ts.Nil(err)
 }
 
-func (ts *ContextConditionTestSuite) Test_contextConditionInverted2() {
-	ts.consumedThingMock.On("ReadProperty", mock.AnythingOfType("string")).Return(true, nil)
-	got, err := contextCondition([]string{"context", "!test"}, ts.consumedThingMock)
+func (ts *ContextConditionTestSuite) Test_CheckContextFalse() {
+	ts.consumedThingMock.On("ReadProperty", mock.AnythingOfType("string")).Return(false, nil)
+	_contextsThing = ts.consumedThingMock
+	c := &conditionContext{
+		context: "test",
+		invert:  false,
+	}
+	got, err := c.check(ts.now)
 	ts.False(got)
+	ts.Nil(err)
+}
+
+func (ts *ContextConditionTestSuite) Test_CheckInvertedContextTrue() {
+	ts.consumedThingMock.On("ReadProperty", mock.AnythingOfType("string")).Return(true, nil)
+	_contextsThing = ts.consumedThingMock
+	c := &conditionContext{
+		context: "test",
+		invert:  true,
+	}
+	got, err := c.check(ts.now)
+	ts.False(got)
+	ts.Nil(err)
+}
+
+func (ts *ContextConditionTestSuite) Test_CheckInvertedContextFalse() {
+	ts.consumedThingMock.On("ReadProperty", mock.AnythingOfType("string")).Return(false, nil)
+	_contextsThing = ts.consumedThingMock
+	c := &conditionContext{
+		context: "test",
+		invert:  true,
+	}
+	got, err := c.check(ts.now)
+	ts.True(got)
 	ts.Nil(err)
 }

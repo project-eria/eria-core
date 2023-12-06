@@ -6,9 +6,11 @@ import (
 	"os"
 	"os/signal"
 	"runtime/debug"
+	"sync"
 	"syscall"
 	"time"
 
+	"github.com/project-eria/go-wot/consumer"
 	"github.com/rs/zerolog"
 	zlog "github.com/rs/zerolog/log"
 )
@@ -16,16 +18,17 @@ import (
 var (
 	// Version is a placeholder that will receive the git tag version during build time
 	// go build -v -ldflags "-X github.com/project-eria/eria-core.AppVersion=vx.x.x
-	AppVersion  = "-"
-	BuildDate   = "-"
-	CoreVersion = "-"
-	_logLevel   = zerolog.InfoLevel
-	_configPath *string
-	_logPath    *string
-	_logFormat  *string
-	_logOutput  *os.File
-	_logNoColor = false
-	_appName    string
+	AppVersion      = "-"
+	BuildDate       = "-"
+	CoreVersion     = "-"
+	_logLevel       = zerolog.InfoLevel
+	_configPath     *string
+	_logPath        *string
+	_logFormat      *string
+	_logOutput      *os.File
+	_logNoColor     = false
+	_appName        string
+	_consumedThings map[string]consumer.ConsumedThing
 )
 
 // Init gets the app name and version and displays app version if requested
@@ -115,4 +118,20 @@ func WaitForSignal() {
 func Close() {
 	zlog.Debug().Msg("[core:Close] Closing...")
 	_logOutput.Close()
+}
+
+func ConnectRemoteThings() {
+	wg := &sync.WaitGroup{}
+	_consumedThings = make(map[string]consumer.ConsumedThing)
+	eriaConsumer := GetConsumer()
+	for ref, thingUrl := range eriaConfig.RemoteThings {
+		wg.Add(1)
+		eriaConsumer.ConnectThing(thingUrl, func(t consumer.ConsumedThing) {
+			_consumedThings[ref] = t
+			wg.Done()
+		}, func(err error) {
+			zlog.Fatal().Err(err).Msg("[core:ConnectRemoteThings] Can't connect remote Thing")
+		})
+	}
+	wg.Wait()
 }

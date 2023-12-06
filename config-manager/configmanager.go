@@ -93,6 +93,7 @@ func (c *ConfigManager) Save() error {
 func processTags(config interface{}) error {
 	configValue := reflect.Indirect(reflect.ValueOf(config))
 	if configValue.Kind() != reflect.Struct {
+		zlog.Trace().Interface("config", config).Str("type", configValue.Kind().String()).Msg("[configmanager:processTags] config is not a struct")
 		return errors.New("invalid config, should be struct")
 	}
 

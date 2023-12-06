@@ -3,6 +3,8 @@
 - Note: Manual Override, Chaque automation peut-être manuellement désactivée (`none`), remplacée (nouvelle condition), pour 1 action, pour une période ou jusqu'a nouvelle modification.
 
 ## Conditions
+No condition means it is executed by default.
+
 - `context|<context name>`
 	- not: `context|!<context name>`
 - `time|[before|after]=<hour in 15:00 format>`
@@ -14,7 +16,8 @@
 - `<action>|<param name>=<value>|<param name>=<value>`
 
 ## Scheduling
-- `<empty>`: Immediate run
+- `immediate`: Immediate run
+- `none`: Disable the scheduling
 - `at|<time>`
 	- fixed hour: `at|<hour in 15:00 format>`
 	- thing hour property: `at|<thing device>=<thing property>`
