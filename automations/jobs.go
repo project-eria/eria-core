@@ -4,6 +4,7 @@ import (
 	"errors"
 	"time"
 
+	"github.com/gookit/goutil/arrutil"
 	"github.com/project-eria/go-wot/producer"
 	zlog "github.com/rs/zerolog/log"
 )
@@ -27,10 +28,17 @@ func scheduleJobs(automations []AutomationConfig) {
 
 	for _, automationConfig := range automations {
 		if exposedThing, ok := _exposedThings[automationConfig.Ref]; ok && exposedThing != nil {
-			automation, err := getAutomation(automationConfig, exposedThing)
+			automation, observables, err := getAutomation(automationConfig, exposedThing)
 			if err == nil {
 				automation.scheduleJob(now)
 				_automations[automationConfig.Ref] = automation
+				// Set the observables, for monitoring
+				for _, context := range observables.contexts {
+					if _, found := _contextsAutomations[context]; !found {
+						_contextsAutomations[context] = make([]*Automation, 0)
+					}
+					_contextsAutomations[context] = append(_contextsAutomations[context], automation)
+				}
 			} else {
 				zlog.Warn().Str("automation", automationConfig.Name).Msg("[automations:scheduleJobs] Skipped")
 			}
@@ -46,41 +54,56 @@ func scheduleJobs(automations []AutomationConfig) {
  * @param automation the automation details
  * @param exposedThing the exposed thing
  */
-func getAutomation(automationConfig AutomationConfig, exposedThing producer.ExposedThing) (*automation, error) {
+func getAutomation(automationConfig AutomationConfig, exposedThing producer.ExposedThing) (*Automation, *Observables, error) {
 	zlog.Info().Str("automation", automationConfig.Name).Msg("[automations:getAutomation] Adding automation")
 
 	// Prepare action
+	zlog.Trace().Str("automation", automationConfig.Name).Str("action", automationConfig.Action).Msg("[automations:getAutomation] preparing action")
 	action, err := getAction(exposedThing, automationConfig.Action)
 	if err != nil {
 		zlog.Error().Err(err).Str("automation", automationConfig.Name).Str("action", automationConfig.Action).Msg("[automations:getAutomation]")
-		return nil, err // Skip this automation
+		return nil, nil, err // Skip this automation
 	}
 	groups := make([]group, len(automationConfig.Groups))
+	observables := &Observables{
+		contexts: make([]string, 0),
+	}
 	for i, groupConfig := range automationConfig.Groups {
+		zlog.Trace().Str("automation", automationConfig.Name).Int("group", i).Str("schedule", groupConfig.Schedule).Msg("[automations:getAutomation] preparing schedule")
 		s, err := getSchedule(groupConfig.Schedule)
 		if err != nil {
 			zlog.Error().Err(err).Str("automation", automationConfig.Name).Int("group", i).Str("schedule", groupConfig.Schedule).Msg("[automations:getAutomation] Can't get schedule")
-			return nil, err // Skip this automation
+			return nil, nil, err // Skip this automation
 		}
-		c, err := getConditions(groupConfig.Conditions)
+		zlog.Trace().Str("automation", automationConfig.Name).Int("group", i).Str("conditions", arrutil.JoinSlice(";", groupConfig.Conditions)).Msg("[automations:getAutomation] preparing conditions")
+		c, o, err := getConditions(groupConfig.Conditions)
 		if err != nil {
 			zlog.Error().Err(err).Str("automation", automationConfig.Name).Int("group", i).Msg("[automations:getAutomation] Can't get conditions")
-			return nil, err // Skip this automation
+			return nil, observables, err // Skip this automation
+		}
+		if o != nil {
+			for _, context := range o.contexts {
+				// Add the context to the observables list (and remove duplicates)
+				if !arrutil.StringsHas(observables.contexts, context) {
+					observables.contexts = append(observables.contexts, context)
+				}
+			}
 		}
 		groups[i] = group{
 			schedule:   s,
 			conditions: c,
 		}
 	}
-	return &automation{
+	return &Automation{
 		name:         automationConfig.Name,
 		exposedThing: exposedThing,
 		action:       action,
 		groups:       groups,
-	}, nil
+	}, observables, nil
 }
 
-func (automation *automation) scheduleJob(now time.Time) {
+func (automation *Automation) scheduleJob(now time.Time) {
+	zlog.Trace().Str("automation", automation.name).Msg("[automations:scheduleJob] scheduling job")
 	j, err := automation.getJob(now)
 	if err != nil {
 		zlog.Error().Err(err).Str("automation", automation.name).Interface("job", j).Msg("[automations:scheduleJob]")
@@ -116,7 +139,7 @@ func (automation *automation) scheduleJob(now time.Time) {
  * @param consumedThings the consumed things
  * @return the final job
  */
-func (automation *automation) getJob(now time.Time) (Schedule, error) {
+func (automation *Automation) getJob(now time.Time) (Schedule, error) {
 	if len(automation.groups) == 0 {
 		return nil, errors.New("missing conditions")
 	}

@@ -3,16 +3,12 @@ package eriaproducer
 import (
 	"context"
 	"fmt"
-	"os"
-	"os/signal"
 	"sync"
-	"syscall"
 
 	"github.com/project-eria/go-wot/producer"
 	"github.com/project-eria/go-wot/protocolHttp"
 	"github.com/project-eria/go-wot/protocolWebSocket"
 	"github.com/project-eria/go-wot/thing"
-	zlog "github.com/rs/zerolog/log"
 )
 
 type EriaProducer struct {
@@ -68,18 +64,9 @@ func (p *EriaProducer) StartServer() {
 		//		_wait.Done()
 	}()
 
-	// Set up channel on which to send signal notifications.
-	// We must use a buffered channel or risk missing the signal
-	// if we're not ready to receive when the signal is sent.
-	c := make(chan os.Signal, 1)
-	signal.Notify(c,
-		syscall.SIGINT,
-		syscall.SIGTERM,
-		syscall.SIGQUIT)
+}
 
-	// Block until keyboard interrupt is received.
-	<-c
-	zlog.Info().Msg("[eriaproducer:StartServer] Keyboard interrupt received, Stopping...")
+func (p *EriaProducer) StopServer() {
 	p.cancel()
 	// Wait for the child goroutine to finish, which will only occur when
 	// the child process has stopped and the call to cmd.Wait has returned.

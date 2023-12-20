@@ -6,14 +6,12 @@ import (
 
 	"github.com/project-eria/go-wot/mocks"
 	"github.com/rs/zerolog"
-	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/suite"
 )
 
 type ContextConditionTestSuite struct {
 	suite.Suite
-	consumedThingMock *mocks.ConsumedThing
-	now               time.Time
+	now time.Time
 }
 
 func Test_ContextConditionTestSuite(t *testing.T) {
@@ -22,9 +20,8 @@ func Test_ContextConditionTestSuite(t *testing.T) {
 
 func (ts *ContextConditionTestSuite) SetupTest() {
 	zerolog.SetGlobalLevel(zerolog.Disabled)
-	consumedThingMock := mocks.ConsumedThing{}
-	ts.consumedThingMock = &consumedThingMock
 	ts.now = time.Date(2000, time.January, 1, 12, 0, 0, 0, time.UTC)
+	_contextsThing = &mocks.ConsumedThing{}
 }
 
 func (ts *ContextConditionTestSuite) Test_NewNoContextsThing() {
@@ -35,8 +32,6 @@ func (ts *ContextConditionTestSuite) Test_NewNoContextsThing() {
 }
 
 func (ts *ContextConditionTestSuite) Test_NewExistingContextThing() {
-	ts.consumedThingMock.On("ReadProperty", mock.AnythingOfType("string")).Return(true, nil)
-	_contextsThing = ts.consumedThingMock
 	c := &conditionContext{
 		context: "test",
 	}
@@ -46,32 +41,24 @@ func (ts *ContextConditionTestSuite) Test_NewExistingContextThing() {
 }
 
 func (ts *ContextConditionTestSuite) Test_NewTooLong() {
-	_contextsThing = ts.consumedThingMock
 	got, err := NewConditionContext([]string{"context", "test", "test"})
 	ts.Nil(got)
-	ts.consumedThingMock.AssertNotCalled(ts.T(), "ReadProperty", mock.AnythingOfType("string"))
 	ts.EqualError(err, "invalid condition length")
 }
 
 func (ts *ContextConditionTestSuite) Test_NewNoName() {
-	_contextsThing = ts.consumedThingMock
 	got, err := NewConditionContext([]string{"context"})
 	ts.Nil(got)
-	ts.consumedThingMock.AssertNotCalled(ts.T(), "ReadProperty", mock.AnythingOfType("string"))
 	ts.EqualError(err, "invalid condition length")
 }
 
 func (ts *ContextConditionTestSuite) Test_NewInvalidChars() {
-	_contextsThing = ts.consumedThingMock
 	got, err := NewConditionContext([]string{"context", "te!st"})
 	ts.Nil(got)
-	ts.consumedThingMock.AssertNotCalled(ts.T(), "ReadProperty", mock.AnythingOfType("string"))
 	ts.EqualError(err, "invalid context name")
 }
 
 func (ts *ContextConditionTestSuite) Test_NewInverted() {
-	ts.consumedThingMock.On("ReadProperty", mock.AnythingOfType("string")).Return(false, nil)
-	_contextsThing = ts.consumedThingMock
 	c := &conditionContext{
 		context: "test",
 		invert:  true,
@@ -82,8 +69,7 @@ func (ts *ContextConditionTestSuite) Test_NewInverted() {
 }
 
 func (ts *ContextConditionTestSuite) Test_CheckContextTrue() {
-	ts.consumedThingMock.On("ReadProperty", mock.AnythingOfType("string")).Return(true, nil)
-	_contextsThing = ts.consumedThingMock
+	_activeContexts = []string{"test"}
 	c := &conditionContext{
 		context: "test",
 		invert:  false,
@@ -94,8 +80,7 @@ func (ts *ContextConditionTestSuite) Test_CheckContextTrue() {
 }
 
 func (ts *ContextConditionTestSuite) Test_CheckContextFalse() {
-	ts.consumedThingMock.On("ReadProperty", mock.AnythingOfType("string")).Return(false, nil)
-	_contextsThing = ts.consumedThingMock
+	_activeContexts = []string{}
 	c := &conditionContext{
 		context: "test",
 		invert:  false,
@@ -106,8 +91,7 @@ func (ts *ContextConditionTestSuite) Test_CheckContextFalse() {
 }
 
 func (ts *ContextConditionTestSuite) Test_CheckInvertedContextTrue() {
-	ts.consumedThingMock.On("ReadProperty", mock.AnythingOfType("string")).Return(true, nil)
-	_contextsThing = ts.consumedThingMock
+	_activeContexts = []string{"test"}
 	c := &conditionContext{
 		context: "test",
 		invert:  true,
@@ -118,8 +102,7 @@ func (ts *ContextConditionTestSuite) Test_CheckInvertedContextTrue() {
 }
 
 func (ts *ContextConditionTestSuite) Test_CheckInvertedContextFalse() {
-	ts.consumedThingMock.On("ReadProperty", mock.AnythingOfType("string")).Return(false, nil)
-	_contextsThing = ts.consumedThingMock
+	_activeContexts = []string{}
 	c := &conditionContext{
 		context: "test",
 		invert:  true,

@@ -17,11 +17,18 @@ type Condition interface {
 	check(time.Time) (bool, error)
 }
 
-func getConditions(conditions []string) ([]Condition, error) {
+type Observables struct {
+	contexts []string
+}
+
+func getConditions(conditions []string) ([]Condition, *Observables, error) {
+	observables := &Observables{
+		contexts: []string{},
+	}
 	cs := make([]Condition, 0)
 	if conditions == nil {
 		zlog.Trace().Msg("[automations:getConditions] no conditions")
-		return cs, nil
+		return cs, nil, nil
 	}
 	for _, condition := range conditions {
 		conditionArray := strings.Split(condition, "|")
@@ -30,19 +37,23 @@ func getConditions(conditions []string) ([]Condition, error) {
 		switch conditionArray[0] {
 		case "context":
 			c, err = newContextCondition(conditionArray)
+			// Add the context to the observables list
+			if c != nil {
+				observables.contexts = append(observables.contexts, c.(*conditionContext).context)
+			}
 		case "time":
 			c, err = newTimeCondition(conditionArray)
 		// TODO case "property":
 		// 	c, err = NewConditionProperty(conditionArray)
 		default:
-			return nil, errors.New("invalid condition type")
+			return nil, nil, errors.New("invalid condition type")
 		}
 		if err != nil {
-			return nil, err
+			return nil, nil, err
 		}
 		cs = append(cs, c)
 	}
-	return cs, nil
+	return cs, observables, nil
 }
 
 func checkConditions(conditions []Condition, now time.Time) (bool, error) {

@@ -18,7 +18,7 @@ func Test_GetConditionsTestSuite(t *testing.T) {
 func (ts *GetConditionsTestSuite) SetupTest() {
 	zerolog.SetGlobalLevel(zerolog.Disabled)
 	newContextCondition = func(_ []string) (*conditionContext, error) {
-		return &conditionContext{}, nil
+		return &conditionContext{context: "test"}, nil
 	}
 	newTimeCondition = func(_ []string) (*conditionTime, error) {
 		return &conditionTime{}, nil
@@ -31,29 +31,33 @@ func (ts *GetConditionsTestSuite) TearDownTest() {
 }
 
 func (ts *GetConditionsTestSuite) Test_InvalidCondition() {
-	got, err := getConditions([]string{"unknown"})
+	got, obs, err := getConditions([]string{"unknown"})
 	ts.Nil(got)
+	ts.Nil(obs)
 	ts.EqualError(err, "invalid condition type")
 }
 
 func (ts *GetConditionsTestSuite) Test_SimpleContextCondition() {
-	got, err := getConditions([]string{"context|test"})
+	got, obs, err := getConditions([]string{"context|test"})
 	ts.Nil(err)
+	ts.Equal([]string{"test"}, obs.contexts)
 	ts.Len(got, 1)
-	ts.Equal(&conditionContext{}, got[0])
+	ts.Equal(&conditionContext{context: "test"}, got[0])
 }
 
 func (ts *GetConditionsTestSuite) Test_SimpleTimeCondition() {
-	got, err := getConditions([]string{"time|test"})
+	got, obs, err := getConditions([]string{"time|test"})
 	ts.Nil(err)
+	ts.Equal([]string{}, obs.contexts)
 	ts.Len(got, 1)
 	ts.Equal(&conditionTime{}, got[0])
 }
 
 func (ts *GetConditionsTestSuite) Test_DualCondition() {
-	got, err := getConditions([]string{"context|test", "time|test"})
+	got, obs, err := getConditions([]string{"context|test", "time|test"})
 	ts.Nil(err)
+	ts.Equal([]string{"test"}, obs.contexts)
 	ts.Len(got, 2)
-	ts.Equal(&conditionContext{}, got[0])
+	ts.Equal(&conditionContext{context: "test"}, got[0])
 	ts.Equal(&conditionTime{}, got[1])
 }

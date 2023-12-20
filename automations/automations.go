@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/go-co-op/gocron"
+	"github.com/gookit/goutil/arrutil"
 	"github.com/project-eria/go-wot/consumer"
 	"github.com/project-eria/go-wot/producer"
 	zlog "github.com/rs/zerolog/log"
@@ -25,7 +26,7 @@ type group struct {
 	conditions []Condition
 }
 
-type automation struct {
+type Automation struct {
 	name          string
 	groups        []group
 	job           Schedule
@@ -40,7 +41,11 @@ var (
 	_exposedThings  map[string]producer.ExposedThing
 	_consumedThings map[string]consumer.ConsumedThing
 	_location       *time.Location
-	_automations    = make(map[string]*automation)
+	_automations    = make(map[string]*Automation)
+
+	_contextsAutomations = make(map[string][]*Automation) // list of automations by context
+
+	_activeContexts = []string{} // The currently active contexts
 )
 
 /**
@@ -57,6 +62,33 @@ func Start(location *time.Location, automations []AutomationConfig, contextsThin
 		zlog.Warn().Str("thing", contextsThingRef).Msg("[automations:Start] Contexts thing not found, contexts will not be used")
 	} else {
 		_contextsThing = consumedThings[contextsThingRef]
+		rawContexts, err := _contextsThing.ReadProperty("actives", nil)
+		if err == nil {
+			// Save the current active contexts
+			_activeContexts = arrutil.MustToStrings(rawContexts)
+			// Monitor context changes
+			_contextsThing.ObserveProperty("actives", nil, func(value interface{}, err error) {
+				if err == nil {
+					current := arrutil.MustToStrings(value)
+					diff := arrutil.Diff(_activeContexts, current, arrutil.StringEqualsComparer)
+
+					// Save the current active contexts, for the conditions
+					_activeContexts = current
+
+					for _, context := range diff {
+						zlog.Info().Str("context", context).Msg("[automations:Start] Context changed, re-schedule")
+						if _, found := _contextsAutomations[context]; found { // If we have automations for this context
+							for _, automation := range _contextsAutomations[context] {
+								// Re-schedule jobs
+								automation.scheduleJob(time.Now().In(_location))
+							}
+						}
+					}
+				}
+			})
+		} else {
+			zlog.Warn().Str("thing", contextsThingRef).Msg("[automations:Start] Contexts thing not rechable, contexts will not be used")
+		}
 	}
 	initCronScheduler()
 	scheduleJobs(automations)

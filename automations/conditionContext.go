@@ -5,6 +5,8 @@ import (
 	"regexp"
 	"strings"
 	"time"
+
+	"github.com/gookit/goutil/arrutil"
 )
 
 type conditionContext struct {
@@ -37,30 +39,15 @@ func NewConditionContext(conditionArray []string) (*conditionContext, error) {
 			context: conditionArray[1][1:],
 			invert:  true,
 		}, nil
-	} else {
-		// If the context is active
-		return &conditionContext{
-			context: conditionArray[1],
-			invert:  false,
-		}, nil
 	}
+	// If the context is active
+	return &conditionContext{
+		context: conditionArray[1],
+		invert:  false,
+	}, nil
 }
 
 func (condition *conditionContext) check(time.Time) (bool, error) {
-	active, err := contextActive(condition.context)
-	if err != nil {
-		return false, err
-	}
+	active := arrutil.InStrings(condition.context, _activeContexts)
 	return condition.invert != active, nil
-}
-
-func contextActive(contextName string) (bool, error) {
-	raw, err := _contextsThing.ReadProperty(contextName)
-	if err != nil {
-		return false, err
-	}
-	if value, ok := raw.(bool); ok {
-		return value, nil
-	}
-	return false, errors.New("invalid context value")
 }

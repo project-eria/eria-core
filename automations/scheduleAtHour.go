@@ -95,7 +95,7 @@ func NewScheduleAtHour(scheduleArray []string) (*scheduleAtHour, error) {
 	s.timeThing = timeThing
 
 	// Get the property value
-	timeThingValue, err := timeThing.ReadProperty(timeThingArray[1])
+	timeThingValue, err := timeThing.ReadProperty(timeThingArray[1], nil)
 	if err != nil {
 		return nil, errors.New("time thing property not available: " + err.Error())
 	}
@@ -136,7 +136,7 @@ func (s *scheduleAtHour) job() error {
 		scheduledHour = s.fixedHour
 	} else {
 		// Get the property value
-		timeThingValue, err := s.timeThing.ReadProperty(s.propertyHour)
+		timeThingValue, err := s.timeThing.ReadProperty(s.propertyHour, nil)
 		if err != nil {
 			return errors.New("time thing property not available: " + err.Error())
 		}

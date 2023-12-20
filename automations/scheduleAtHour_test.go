@@ -7,6 +7,7 @@ import (
 	"github.com/project-eria/go-wot/consumer"
 	"github.com/project-eria/go-wot/mocks"
 	"github.com/rs/zerolog"
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/suite"
 )
 
@@ -22,8 +23,8 @@ func Test_ScheduleAtHourTestSuite(t *testing.T) {
 func (ts *ScheduleAtHourTestSuite) SetupTest() {
 	zerolog.SetGlobalLevel(zerolog.Disabled)
 	consumedThingMock := &mocks.ConsumedThing{}
-	consumedThingMock.On("ReadProperty", "timeProperty").Return("2023-11-02T14:30:10Z", nil)
-	consumedThingMock.On("ReadProperty", "otherProperty").Return("", errors.New("property otherProperty not found"))
+	consumedThingMock.On("ReadProperty", "timeProperty", mock.Anything).Return("2023-11-02T14:30:10Z", nil)
+	consumedThingMock.On("ReadProperty", "otherProperty", mock.Anything).Return("", errors.New("property otherProperty not found"))
 	ts.consumedThings = map[string]consumer.ConsumedThing{
 		"astral": consumedThingMock,
 	}

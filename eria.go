@@ -6,7 +6,6 @@ import (
 	"os"
 	"os/signal"
 	"runtime/debug"
-	"sync"
 	"syscall"
 	"time"
 
@@ -98,6 +97,12 @@ func Init(appName string) {
 	}
 }
 
+// Stop and close all services/files
+func Close() {
+	zlog.Debug().Msg("[core:Close] Closing...")
+	_logOutput.Close()
+}
+
 // WaitForSignal Wait for any signal and runs all the defer
 func WaitForSignal() {
 	// Set up channel on which to send signal notifications.
@@ -114,24 +119,11 @@ func WaitForSignal() {
 	zlog.Info().Msg("[core:WaitForSignal] Keyboard interrupt received")
 }
 
-// Stop and close all services/files
-func Close() {
-	zlog.Debug().Msg("[core:Close] Closing...")
-	_logOutput.Close()
-}
-
-func ConnectRemoteThings() {
-	wg := &sync.WaitGroup{}
-	_consumedThings = make(map[string]consumer.ConsumedThing)
-	eriaConsumer := GetConsumer()
-	for ref, thingUrl := range eriaConfig.RemoteThings {
-		wg.Add(1)
-		eriaConsumer.ConnectThing(thingUrl, func(t consumer.ConsumedThing) {
-			_consumedThings[ref] = t
-			wg.Done()
-		}, func(err error) {
-			zlog.Fatal().Err(err).Msg("[core:ConnectRemoteThings] Can't connect remote Thing")
-		})
-	}
-	wg.Wait()
+func Start(instance string) {
+	ConnectThings()
+	// Automations are present in the config file
+	StartAutomations(instance)
+	Producer(instance).StartServer()
+	WaitForSignal()
+	Producer(instance).StopServer()
 }

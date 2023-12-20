@@ -12,7 +12,7 @@ var (
 	eriaProducer *eriaproducer.EriaProducer
 )
 
-func GetProducer(instance string) *eriaproducer.EriaProducer {
+func Producer(instance string) *eriaproducer.EriaProducer {
 	if eriaProducer == nil {
 		zlog.Trace().Msg("[core:GetProducer] Creating producer")
 		eriaProducer = eriaproducer.New(eriaConfig.Host, eriaConfig.Port, eriaConfig.ExposedAddr, _appName, AppVersion, BuildDate)

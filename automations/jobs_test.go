@@ -52,16 +52,14 @@ func (ts *GetJobTestSuite) SetupTest() {
 	// }
 
 	// contextsThing
-	contextsThingMock := &mocks.ConsumedThing{}
-	contextsThingMock.On("ReadProperty", "holiday").Return(true, nil)
-	contextsThingMock.On("ReadProperty", "away").Return(false, nil)
-	_contextsThing = contextsThingMock
+	_contextsThing = &mocks.ConsumedThing{}
+	_activeContexts = []string{"holiday"}
 	// _location = time.UTC
 }
 
 // No groups
 func (ts *GetJobTestSuite) Test_NoGroups() {
-	automation := &automation{
+	automation := &Automation{
 		groups: []group{},
 	}
 	j, err := automation.getJob(ts.now)
@@ -71,7 +69,7 @@ func (ts *GetJobTestSuite) Test_NoGroups() {
 
 // No matching time condition
 func (ts *GetJobTestSuite) Test_NoMatchingTimeCondition() {
-	automation := &automation{
+	automation := &Automation{
 		groups: []group{
 			{
 				conditions: []Condition{
@@ -90,7 +88,7 @@ func (ts *GetJobTestSuite) Test_NoMatchingTimeCondition() {
 
 // Matching time condition
 func (ts *GetJobTestSuite) Test_MatchingTimeCondition() {
-	automation := &automation{
+	automation := &Automation{
 		groups: []group{
 			{
 				conditions: []Condition{
@@ -109,7 +107,7 @@ func (ts *GetJobTestSuite) Test_MatchingTimeCondition() {
 
 // Group with empty conditions
 func (ts *GetJobTestSuite) Test_GroupWithEmptyCondition() {
-	automation := &automation{
+	automation := &Automation{
 		groups: []group{
 			{
 				conditions: []Condition{},
@@ -124,7 +122,7 @@ func (ts *GetJobTestSuite) Test_GroupWithEmptyCondition() {
 
 // No Matching multiple conditions
 func (ts *GetJobTestSuite) Test_NoMatchingMultipleConditions() {
-	automation := &automation{
+	automation := &Automation{
 		groups: []group{
 			{
 				conditions: []Condition{
@@ -146,7 +144,7 @@ func (ts *GetJobTestSuite) Test_NoMatchingMultipleConditions() {
 
 // Matching multiple conditions
 func (ts *GetJobTestSuite) Test_MatchingMultipleConditions() {
-	automation := &automation{
+	automation := &Automation{
 		groups: []group{
 			{
 				conditions: []Condition{
@@ -170,7 +168,7 @@ func (ts *GetJobTestSuite) Test_MatchingMultipleConditions() {
 
 // No Matching multiple groups",
 func (ts *GetJobTestSuite) Test_NoMatchingMultipleGroups() {
-	automation := &automation{
+	automation := &Automation{
 		groups: []group{
 			{
 				conditions: []Condition{
@@ -200,7 +198,7 @@ func (ts *GetJobTestSuite) Test_NoMatchingMultipleGroups() {
 
 // Matching multiple groups #1
 func (ts *GetJobTestSuite) Test_MatchingMultipleGroups1() {
-	automation := &automation{
+	automation := &Automation{
 		groups: []group{
 			{
 				conditions: []Condition{
@@ -229,7 +227,7 @@ func (ts *GetJobTestSuite) Test_MatchingMultipleGroups1() {
 
 // Matching multiple groups #2
 func (ts *GetJobTestSuite) Test_MatchingMultipleGroups2() {
-	automation := &automation{
+	automation := &Automation{
 		groups: []group{
 			{
 				conditions: []Condition{
@@ -258,7 +256,7 @@ func (ts *GetJobTestSuite) Test_MatchingMultipleGroups2() {
 
 // Matching condition with at hour create
 func (ts *GetJobTestSuite) Test_MatchingConditionWithAtHour() {
-	automation := &automation{
+	automation := &Automation{
 		groups: []group{
 			{
 				conditions: []Condition{
@@ -299,7 +297,7 @@ func (ts *ScheduleJobTestSuite) SetupTest() {
 
 // Initial Job - Matching condition
 func (ts *ScheduleJobTestSuite) Test_InitialMatchingCondition() {
-	automation := &automation{
+	automation := &Automation{
 		groups: []group{
 			{
 				conditions: []Condition{
@@ -325,7 +323,7 @@ func (ts *ScheduleJobTestSuite) Test_InitialMatchingCondition() {
 
 // Initial Job - Not Matching condition
 func (ts *ScheduleJobTestSuite) Test_InitialNoMatchingCondition() {
-	automation := &automation{
+	automation := &Automation{
 		groups: []group{
 			{
 				conditions: []Condition{
@@ -351,7 +349,7 @@ func (ts *ScheduleJobTestSuite) Test_InitialNoMatchingCondition() {
 
 // Existing Job - Matchingcondition, replacing job
 func (ts *ScheduleJobTestSuite) Test_ExistingMatchingConditionReplacingJob() {
-	automation := &automation{
+	automation := &Automation{
 		groups: []group{
 			{
 				conditions: []Condition{
@@ -383,7 +381,7 @@ func (ts *ScheduleJobTestSuite) Test_ExistingMatchingConditionReplacingJob() {
 
 // Existing Job - No Matching condition
 func (ts *ScheduleJobTestSuite) Test_ExistingNoMatchingCondition() {
-	automation := &automation{
+	automation := &Automation{
 		groups: []group{
 			{
 				conditions: []Condition{
@@ -417,7 +415,7 @@ func (ts *ScheduleJobTestSuite) Test_ExistingMatchingConditionIdenticalJob() {
 	cronJob, _ := _cronScheduler.Every(1).Day().At("12:00").Tag("atHour").Do(func() {
 		zlog.Info().Msg("Running scheduled job")
 	})
-	automation := &automation{
+	automation := &Automation{
 		groups: []group{
 			{
 				conditions: []Condition{
