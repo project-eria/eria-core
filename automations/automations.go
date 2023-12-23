@@ -105,5 +105,4 @@ func initCronScheduler() {
 	}
 
 	_cronScheduler = gocron.NewScheduler(_location)
-	_cronScheduler.TagsUnique()
 }

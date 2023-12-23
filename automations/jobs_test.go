@@ -12,13 +12,12 @@ import (
 
 type GetJobTestSuite struct {
 	suite.Suite
-	now          time.Time
-	exposedThing *mocks.ExposedThing
+	now time.Time
 }
 
 var onAction = &action{
 	Ref:        "on",
-	Handler:    nil,
+	Handler:    func(i interface{}, m map[string]interface{}) (interface{}, error) { return nil, nil },
 	Parameters: make(map[string]interface{}),
 }
 

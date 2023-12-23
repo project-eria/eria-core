@@ -21,7 +21,7 @@ func PropertyUseDefaultHandlers(t producer.ExposedThing, ref string) (*PropertyD
 }
 
 func getPropertyDefaultReadHandler(propertyData *PropertyData) producer.PropertyReadHandler {
-	return func(t producer.ExposedThing, property string, options map[string]string) (interface{}, error) {
+	return func(t producer.ExposedThing, property string, parameters map[string]interface{}) (interface{}, error) {
 		value := propertyData.Get()
 		zlog.Trace().Str("property", property).Interface("value", value).Msg("[eriaproducer:propertyReadHandler] Value get")
 		return value, nil
@@ -29,7 +29,7 @@ func getPropertyDefaultReadHandler(propertyData *PropertyData) producer.Property
 }
 
 func getPropertyDefaultWriteHandler(propertyData *PropertyData) producer.PropertyWriteHandler {
-	return func(t producer.ExposedThing, property string, value interface{}, options map[string]string) error {
+	return func(t producer.ExposedThing, property string, value interface{}, parameters map[string]interface{}) error {
 		_, err := propertyData.Set(value)
 		if err != nil {
 			zlog.Error().Str("property", property).Interface("value", value).Err(err).Msg("[eriaproducer:propertyWriteHandler]")
@@ -52,7 +52,7 @@ func (p *EriaProducer) SetPropertyValue(t producer.ExposedThing, ref string, val
 		}
 		if changed {
 			zlog.Trace().Str("thing", t.Ref()).Str("property", ref).Interface("value", value).Msg("[eriaproducer:SetPropertyValue] value changed")
-			t.EmitPropertyChange(ref, value, map[string]string{})
+			t.EmitPropertyChange(ref, value, nil)
 			return true
 		}
 	} else {

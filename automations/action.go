@@ -18,7 +18,7 @@ type action struct {
 }
 
 /**
- * `<action>/<param name>=<value>/<param name>=<value>`
+ * `<action>|<param name>=<value>|<param name>=<value>`
  */
 func getAction(exposedThing producer.ExposedThing, actionStr string) (*action, error) {
 	actionStr = strings.TrimSpace(actionStr)
@@ -51,6 +51,11 @@ func getAction(exposedThing producer.ExposedThing, actionStr string) (*action, e
 }
 
 func (a *action) run() error {
-	// TODO
-	return nil
+	// TODO: use parameters
+	if a.Handler == nil {
+		return errors.New("missing action handler")
+	}
+	_, err := a.Handler(nil, a.Parameters)
+	// Note we don't do anything with the output
+	return err
 }
