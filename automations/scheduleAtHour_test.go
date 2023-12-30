@@ -3,7 +3,9 @@ package automations
 import (
 	"errors"
 	"testing"
+	"time"
 
+	"github.com/go-co-op/gocron"
 	"github.com/project-eria/go-wot/consumer"
 	"github.com/project-eria/go-wot/mocks"
 	"github.com/rs/zerolog"
@@ -198,7 +200,7 @@ func (ts *ScheduleAtHourTestSuite) Test_Job() {
 
 func (ts *ScheduleAtHourTestSuite) Test_Start() {
 	action := &MockedAction{}
-	initCronScheduler()
+	_cronScheduler = gocron.NewScheduler(time.UTC)
 	s := &scheduleAtHour{
 		scheduledHour: "12:20",
 	}
@@ -230,7 +232,7 @@ func (ts *ScheduleAtHourTestSuite) Test_StartMissingAction() {
 
 func (ts *ScheduleAtHourTestSuite) Test_Cancel() {
 	action := &MockedAction{}
-	initCronScheduler()
+	_cronScheduler = gocron.NewScheduler(time.UTC)
 	s := &scheduleAtHour{
 		scheduledHour: "12:20",
 	}

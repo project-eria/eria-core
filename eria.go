@@ -28,6 +28,7 @@ var (
 	_logNoColor     = false
 	_appName        string
 	_consumedThings map[string]consumer.ConsumedThing
+	_location       *time.Location
 )
 
 // Init gets the app name and version and displays app version if requested
@@ -65,7 +66,7 @@ func Init(appName string) {
 	} else if *_logFormat == "json" {
 		zlog.Logger = zlog.Output(_logOutput)
 	} else {
-		fmt.Printf("Can't unknown log format '%s'\n", *_logFormat)
+		fmt.Printf("unknown log format '%s'\n", *_logFormat)
 		os.Exit(1)
 	}
 
@@ -86,7 +87,7 @@ func Init(appName string) {
 	// Based on https://stackoverflow.com/questions/54890161/how-to-get-go-detailed-build-logs-with-all-used-packages-in-gopath-and-go-modu/54890460#54890460
 	bi, ok := debug.ReadBuildInfo()
 	if !ok {
-		zlog.Error().Msg("[core:NewServer] Getting build info failed (not in module mode?)!")
+		zlog.Error().Msg("[core:Init] Getting build info failed (not in module mode?)!")
 		return
 	}
 
@@ -94,6 +95,12 @@ func Init(appName string) {
 		if dep.Path == "github.com/project-eria/eria-core" {
 			CoreVersion = dep.Version
 		}
+	}
+
+	_location, err = time.LoadLocation(eriaConfig.Location)
+	if err != nil {
+		zlog.Error().Err(err).Msg("[core:Init] Can't load location")
+		return
 	}
 }
 
@@ -122,7 +129,8 @@ func WaitForSignal() {
 func Start(instance string) {
 	ConnectThings()
 	// Automations are present in the config file
-	StartAutomations(instance)
+	startAutomations(instance)
+	startCronScheduler()
 	Producer(instance).StartServer()
 	WaitForSignal()
 	Producer(instance).StopServer()

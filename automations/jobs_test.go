@@ -4,6 +4,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/go-co-op/gocron"
 	"github.com/project-eria/go-wot/mocks"
 	"github.com/rs/zerolog"
 	zlog "github.com/rs/zerolog/log"
@@ -291,7 +292,7 @@ func (ts *ScheduleJobTestSuite) SetupTest() {
 	zerolog.SetGlobalLevel(zerolog.Disabled)
 	ts.now = time.Date(2000, time.January, 1, 12, 0, 0, 0, time.UTC)
 	ts.olderNow = time.Date(2000, time.January, 1, 11, 0, 0, 0, time.UTC)
-	initCronScheduler()
+	_cronScheduler = gocron.NewScheduler(time.UTC)
 }
 
 // Initial Job - Matching condition

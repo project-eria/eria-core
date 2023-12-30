@@ -46,6 +46,8 @@ var (
 	_contextsAutomations = make(map[string][]*Automation) // list of automations by context
 
 	_activeContexts = []string{} // The currently active contexts
+
+	_cronScheduler *gocron.Scheduler
 )
 
 /**
@@ -54,10 +56,11 @@ var (
  * @param automations the automations list
  * @param contextsThing the thing service to retrive contexts
  */
-func Start(location *time.Location, automations []AutomationConfig, contextsThingRef string, exposedThings map[string]producer.ExposedThing, consumedThings map[string]consumer.ConsumedThing) {
+func Start(location *time.Location, automations []AutomationConfig, contextsThingRef string, exposedThings map[string]producer.ExposedThing, consumedThings map[string]consumer.ConsumedThing, cronScheduler *gocron.Scheduler) {
 	_exposedThings = exposedThings
 	_consumedThings = consumedThings
 	_location = location
+	_cronScheduler = cronScheduler
 	if _, found := consumedThings[contextsThingRef]; !found {
 		zlog.Warn().Str("thing", contextsThingRef).Msg("[automations:Start] Contexts thing not found, contexts will not be used")
 	} else {
@@ -90,19 +93,5 @@ func Start(location *time.Location, automations []AutomationConfig, contextsThin
 			zlog.Warn().Str("thing", contextsThingRef).Msg("[automations:Start] Contexts thing not rechable, contexts will not be used")
 		}
 	}
-	initCronScheduler()
 	scheduleJobs(automations)
-	_cronScheduler.StartAsync()
-}
-
-var (
-	_cronScheduler *gocron.Scheduler
-)
-
-func initCronScheduler() {
-	if _cronScheduler != nil {
-		_cronScheduler.Clear()
-	}
-
-	_cronScheduler = gocron.NewScheduler(_location)
 }

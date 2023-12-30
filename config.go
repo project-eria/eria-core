@@ -21,7 +21,7 @@ func LoadConfig(config interface{}) *configmanager.ConfigManager {
 	cm, err := configmanager.Init(*_configPath, config, &eriaConfig)
 	if err != nil {
 		if configmanager.IsFileMissing(err) {
-			zlog.Fatal().Msg("[core:LoadConfig] Config file do not exists...")
+			zlog.Fatal().Str("filePath", *_configPath).Msg("[core:LoadConfig] Config file do not exists...")
 		} else {
 			zlog.Fatal().Str("filePath", *_configPath).Err(err).Msg("[core:LoadConfig]")
 		}
