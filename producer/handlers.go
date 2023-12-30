@@ -7,7 +7,13 @@ import (
 	zlog "github.com/rs/zerolog/log"
 )
 
-func PropertyUseDefaultHandlers(t producer.ExposedThing, ref string) (*PropertyData, error) {
+/**
+ * Set default read/write handlers for a property
+ * @param {producer.ExposedThing} t - exposed thing
+ * @param {string} ref - property name
+ * @returns {PropertyData}, {Error}
+ */
+func (p *EriaProducer) PropertyUseDefaultHandlers(t producer.ExposedThing, ref string) (*PropertyData, error) {
 	if property, ok := t.TD().Properties[ref]; ok {
 		var propertyData = &PropertyData{
 			value:     property.Data.Default,
@@ -15,6 +21,9 @@ func PropertyUseDefaultHandlers(t producer.ExposedThing, ref string) (*PropertyD
 		}
 		t.SetPropertyReadHandler(ref, getPropertyDefaultReadHandler(propertyData))
 		t.SetPropertyWriteHandler(ref, getPropertyDefaultWriteHandler(propertyData))
+
+		p.propertyDefaultDataHandlers[t.Ref()][ref] = propertyData
+
 		return propertyData, nil
 	}
 	return nil, errors.New("property not found")

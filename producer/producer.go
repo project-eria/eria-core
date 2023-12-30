@@ -80,6 +80,8 @@ func (p *EriaProducer) AddThing(ref string, td *thing.Thing) (producer.ExposedTh
 
 	exposedThing := p.Produce(ref, td)
 	p.things[ref] = exposedThing
+	// Initialize the list of default properties handlers
+	p.propertyDefaultDataHandlers[ref] = map[string]*PropertyData{}
 	return exposedThing, nil
 }
 
