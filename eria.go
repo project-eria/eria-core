@@ -104,6 +104,11 @@ func Init(appName string) {
 	}
 }
 
+// Return the location
+func Location() *time.Location {
+	return _location
+}
+
 // Stop and close all services/files
 func Close() {
 	zlog.Debug().Msg("[core:Close] Closing...")

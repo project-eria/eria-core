@@ -1,9 +1,9 @@
 module github.com/project-eria/eria-core
 
-go 1.20
+go 1.21
 
 require (
-	github.com/go-co-op/gocron v1.36.0
+	github.com/go-co-op/gocron v1.37.0
 	github.com/gookit/goutil v0.6.14
 	github.com/project-eria/go-wot v1.5.0
 	github.com/rs/zerolog v1.29.0
