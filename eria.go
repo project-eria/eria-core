@@ -32,7 +32,7 @@ var (
 )
 
 // Init gets the app name and version and displays app version if requested
-func Init(appName string) {
+func Init(appName string, config interface{}) {
 	_appName = appName
 	//	zerolog.TimeFieldFormat = zerolog.TimeFormatUnix
 	showVersion := flag.Bool("v", false, "Display the version")
@@ -97,6 +97,10 @@ func Init(appName string) {
 		}
 	}
 
+	// Load the config file
+	loadConfig(config)
+
+	// Set the location
 	_location, err = time.LoadLocation(eriaConfig.Location)
 	if err != nil {
 		zlog.Error().Err(err).Msg("[core:Init] Can't load location")

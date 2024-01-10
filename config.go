@@ -16,8 +16,8 @@ var eriaConfig = struct {
 	RemoteThings map[string]string              `yaml:"remoteThings,omitempty"`
 }{}
 
-// LoadConfig Loads the config file into a struct
-func LoadConfig(config interface{}) *configmanager.ConfigManager {
+// loadConfig Loads the config file into a struct
+func loadConfig(config interface{}) *configmanager.ConfigManager {
 	cm, err := configmanager.Init(*_configPath, config, &eriaConfig)
 	if err != nil {
 		if configmanager.IsFileMissing(err) {
