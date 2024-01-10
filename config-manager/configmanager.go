@@ -3,7 +3,6 @@ package configmanager
 import (
 	"encoding/json"
 	"errors"
-	"io/ioutil"
 	"os"
 	"reflect"
 
@@ -46,7 +45,7 @@ func IsFileMissing(e error) bool {
 // Load config from file, based on the configmanger parameters
 func (c *ConfigManager) Load() error {
 	zlog.Trace().Str("filePath", c.filepath).Msg("[configmanager:Load] Loading config")
-	bytes, err := ioutil.ReadFile(c.filepath)
+	bytes, err := os.ReadFile(c.filepath)
 	if err != nil {
 		// TODO What to do if file doesn't exists
 		return err
@@ -61,14 +60,17 @@ func (c *ConfigManager) Load() error {
 		return err
 	}
 
-	// Process the app config
-	if err := yaml.Unmarshal(bytes, c.config); err != nil {
-		// TODO What to do if not valid file
-		return err
+	if c.config != nil {
+		// Process the app config
+		if err := yaml.Unmarshal(bytes, c.config); err != nil {
+			// TODO What to do if not valid file
+			return err
+		}
+		if err := processTags(c.config); err != nil {
+			return err
+		}
 	}
-	if err := processTags(c.config); err != nil {
-		return err
-	}
+
 	// Display the config if trace logs enabled
 	if e := zlog.Trace(); e.Enabled() {
 		eriaContent, _ := json.MarshalIndent(c.eriaConfig, "", "  ")
@@ -87,7 +89,7 @@ func (c *ConfigManager) Save() error {
 		return err
 	}
 
-	return ioutil.WriteFile(c.filepath, bytes, 0644)
+	return os.WriteFile(c.filepath, bytes, 0644)
 }
 
 func processTags(config interface{}) error {
