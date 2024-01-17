@@ -17,7 +17,7 @@ func (p *EriaProducer) PropertyUseDefaultHandlers(t producer.ExposedThing, ref s
 	if property, ok := t.TD().Properties[ref]; ok {
 		var propertyData = &PropertyData{
 			value:     property.Data.Default,
-			valueType: property.Type,
+			valueType: property.Data.Type,
 		}
 		t.SetPropertyReadHandler(ref, getPropertyDefaultReadHandler(propertyData))
 		t.SetPropertyWriteHandler(ref, getPropertyDefaultWriteHandler(propertyData))

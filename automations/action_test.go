@@ -11,13 +11,10 @@ import (
 	"github.com/stretchr/testify/suite"
 )
 
-func handler(interface{}, map[string]string) (interface{}, error) {
-	return nil, nil
-}
-
 type ActionTestSuite struct {
 	suite.Suite
-	exposedThing *mocks.ExposedThing
+	exposedThing  *mocks.ExposedThing
+	exposedAction producer.ExposedAction
 }
 
 func Test_ActionTestSuite(t *testing.T) {
@@ -31,20 +28,20 @@ func (ts *ActionTestSuite) SetupTest() {
 		"a",
 		"No Input, No Output",
 		"",
-		nil,
-		nil,
 	)
-	exposedAction := producer.NewExposedAction(aAction)
-	ts.exposedThing.On("ExposedAction", "on").Return(exposedAction, nil)
+	ts.exposedAction = producer.NewExposedAction(aAction)
+	ts.exposedThing.On("ExposedAction", "on").Return(ts.exposedAction, nil)
 	ts.exposedThing.On("ExposedAction", "off").Return(nil, errors.New("exposed action not found"))
 }
 
 func (ts *ActionTestSuite) Test_Exists() {
+
 	got, err := getAction(ts.exposedThing, "on")
 	ts.Equal(got, &action{
-		Ref:        "on",
-		Handler:    nil,
-		Parameters: make(map[string]interface{}),
+		Ref:           "on",
+		ExposedThing:  ts.exposedThing,
+		ExposedAction: ts.exposedAction,
+		Parameters:    make(map[string]string),
 	})
 	ts.Nil(err)
 }
@@ -64,9 +61,10 @@ func (ts *ActionTestSuite) Test_Invalid() {
 func (ts *ActionTestSuite) Test_WithParams() {
 	got, err := getAction(ts.exposedThing, "on|param1=true")
 	ts.Equal(got, &action{
-		Ref:     "on",
-		Handler: nil,
-		Parameters: map[string]interface{}{
+		Ref:           "on",
+		ExposedThing:  ts.exposedThing,
+		ExposedAction: ts.exposedAction,
+		Parameters: map[string]string{
 			"param1": "true",
 		},
 	})

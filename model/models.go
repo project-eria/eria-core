@@ -6,13 +6,13 @@ import (
 )
 
 var Models = map[string]Model{
-	"EriaAppController": Model{
+	"EriaAppController": {
 		Version: "1.0.0",
 		Properties: map[string]ModelProperty{
 			"logLevel": {Meta: propertyModel.LogLevel},
 		},
 	},
-	"LightBasic": Model{
+	"LightBasic": {
 		Properties: map[string]ModelProperty{
 			"on": {DefaultValue: false, Meta: propertyModel.OnOff},
 		},
@@ -20,7 +20,7 @@ var Models = map[string]Model{
 			"toggle": {Meta: actionModel.Toggle},
 		},
 	},
-	"LightDimmer": Model{
+	"LightDimmer": {
 		Properties: map[string]ModelProperty{
 			"on":         {DefaultValue: false, Meta: propertyModel.OnOff},
 			"brightness": {DefaultValue: 0, Meta: propertyModel.Brightness},
@@ -30,7 +30,7 @@ var Models = map[string]Model{
 			"toggle": {Meta: actionModel.Toggle},
 		},
 	},
-	"ShutterBasic": Model{
+	"ShutterBasic": {
 		Properties: map[string]ModelProperty{
 			"open": {DefaultValue: false, Meta: propertyModel.Open},
 		},
@@ -40,7 +40,7 @@ var Models = map[string]Model{
 			"stop":  {Meta: actionModel.Stop},
 		},
 	},
-	"ShutterPosition": Model{
+	"ShutterPosition": {
 		Properties: map[string]ModelProperty{
 			"open":     {DefaultValue: false, Meta: propertyModel.Open},
 			"position": {DefaultValue: 0, Meta: propertyModel.Position},
@@ -52,7 +52,7 @@ var Models = map[string]Model{
 			"setPosition": {Meta: actionModel.SetPosition},
 		},
 	},
-	"TemperatureSensor": Model{
+	"TemperatureSensor": {
 		Properties: map[string]ModelProperty{
 			"temperature": {DefaultValue: 0.0, Meta: propertyModel.Temperature},
 		},
@@ -60,38 +60,38 @@ var Models = map[string]Model{
 			"calibrateTemperature": {Meta: actionModel.CalibrateTemperature},
 		},
 	},
-	"VoltageSensor": Model{
+	"VoltageSensor": {
 		Properties: map[string]ModelProperty{
 			"volts": {DefaultValue: 0.0, Meta: propertyModel.Voltage},
 		},
 	},
-	"HygrometerSensor": Model{
+	"HygrometerSensor": {
 		Properties: map[string]ModelProperty{
 			"humidity": {DefaultValue: 0, Meta: propertyModel.Humidity},
 		},
 	},
-	"BarometerSensor": Model{
+	"BarometerSensor": {
 		Properties: map[string]ModelProperty{
 			"pressure": {DefaultValue: 0, Meta: propertyModel.Pressure},
 		},
 	},
-	"WindgaugeSensor": Model{
+	"WindgaugeSensor": {
 		Properties: map[string]ModelProperty{
 			"windStrength": {DefaultValue: 0.0, Meta: propertyModel.WindStrength},
 			"windAngle":    {DefaultValue: 0, Meta: propertyModel.WindAngle},
 		},
 	},
-	"WaterMeter": Model{
+	"WaterMeter": {
 		Properties: map[string]ModelProperty{
 			"liters": {DefaultValue: 0.0, Meta: propertyModel.Liters},
 		},
 	},
-	"UVSensor": Model{
+	"UVSensor": {
 		Properties: map[string]ModelProperty{
 			"uvIndex": {DefaultValue: 0.0, Meta: propertyModel.UVIndex},
 		},
 	},
-	"PHSensor": Model{
+	"PHSensor": {
 		Properties: map[string]ModelProperty{
 			"ph": {DefaultValue: 0.0, Meta: propertyModel.PH},
 		},
@@ -99,7 +99,7 @@ var Models = map[string]Model{
 			"calibratePH": {Meta: actionModel.CalibratePH},
 		},
 	},
-	"ORPSensor": Model{
+	"ORPSensor": {
 		Properties: map[string]ModelProperty{
 			"orp": {DefaultValue: 0, Meta: propertyModel.ORP},
 		},

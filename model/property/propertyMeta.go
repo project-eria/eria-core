@@ -1,15 +1,13 @@
 package propertyModel
 
+import (
+	"github.com/project-eria/go-wot/dataSchema"
+	"github.com/project-eria/go-wot/interaction"
+)
+
 type Meta struct {
 	Title       string
 	Description string
-	Type        string
-	ReadOnly    bool
-	Unit        string
-	Enum        []interface{}
-	Minimum     int
-	Maximum     int
-	MinLength   uint16
-	MaxLength   uint16
-	Pattern     string
+	Data        dataSchema.Data
+	Options     []interaction.PropertyOption
 }

@@ -47,7 +47,7 @@ func AddModel(t *thing.Thing, modelId string, postfix string) error {
 
 	for key, property := range modelType.Properties {
 		id := key + postfix
-		if _, err := AddProperty(t, id, property.DefaultValue, property.Meta, property.UriVariables); err != nil {
+		if _, err := AddProperty(t, id, property.Meta, property.UriVariables); err != nil {
 			return err
 		}
 	}
@@ -73,8 +73,7 @@ func AddAction(t *thing.Thing, id string, meta actionModel.Meta, uriVariables ma
 		id,
 		meta.Title,
 		meta.Description,
-		nil,
-		nil,
+		meta.Options...,
 	)
 	// TODO (remove?) action.ATtype = schema
 	t.AddAction(action)
@@ -82,44 +81,14 @@ func AddAction(t *thing.Thing, id string, meta actionModel.Meta, uriVariables ma
 }
 
 // AddProperty return an property from schema @type
-func AddProperty(t *thing.Thing, id string, defaultValue interface{}, meta propertyModel.Meta, uriVariables map[string]dataSchema.Data) (*interaction.Property, error) {
+func AddProperty(t *thing.Thing, id string, meta propertyModel.Meta, uriVariables map[string]dataSchema.Data) (*interaction.Property, error) {
 	zlog.Trace().Str("property", id).Msg("[thing:AddProperty] Adding property")
-	var data dataSchema.Data
-	switch meta.Type {
-	case "boolean":
-		var defaultBoolean bool
-		if defaultValue != nil {
-			defaultBoolean = defaultValue.(bool)
-		}
-		data = dataSchema.NewBoolean(defaultBoolean)
-	case "integer":
-		var defaultInteger int
-		if defaultValue != nil {
-			defaultInteger = defaultValue.(int)
-		}
-		data = dataSchema.NewInteger(defaultInteger, meta.Unit, meta.Minimum, meta.Maximum)
-	case "number":
-		var defaultNumber float64
-		if defaultValue != nil {
-			defaultNumber = defaultValue.(float64)
-		}
-		data = dataSchema.NewNumber(defaultNumber, meta.Unit, meta.Minimum, meta.Maximum)
-	case "string":
-		var defaultString string
-		if defaultValue != nil {
-			defaultString = defaultValue.(string)
-		}
-		data = dataSchema.NewString(defaultString, meta.MinLength, meta.MaxLength, meta.Pattern)
-	}
 	property := interaction.NewProperty(
 		id,
 		meta.Title,
 		meta.Description,
-		false,
-		false,
-		true,
-		uriVariables,
-		data,
+		meta.Data,
+		meta.Options...,
 	)
 	t.AddProperty(property)
 	// TODO (remove?) property.ATtype = schema
@@ -132,7 +101,7 @@ func AddEvent(t *thing.Thing, id string, meta eventModel.Meta, uriVariables map[
 		id,
 		meta.Title,
 		meta.Description,
-		nil,
+		meta.Options...,
 	)
 	t.AddEvent(event)
 	return event, nil

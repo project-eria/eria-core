@@ -1,12 +1,11 @@
 package actionModel
 
 import (
-	"github.com/project-eria/go-wot/dataSchema"
+	"github.com/project-eria/go-wot/interaction"
 )
 
 type Meta struct {
 	Title       string
 	Description string
-	Input       dataSchema.Data
-	Output      dataSchema.Data
+	Options     []interaction.ActionOption
 }

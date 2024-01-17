@@ -16,12 +16,6 @@ type GetJobTestSuite struct {
 	now time.Time
 }
 
-var onAction = &action{
-	Ref:        "on",
-	Handler:    func(i interface{}, m map[string]interface{}) (interface{}, error) { return nil, nil },
-	Parameters: make(map[string]interface{}),
-}
-
 func Test_GetJobTestSuite(t *testing.T) {
 	suite.Run(t, &GetJobTestSuite{})
 }
@@ -36,8 +30,6 @@ func (ts *GetJobTestSuite) SetupTest() {
 	// 	"a",
 	// 	"No Input, No Output",
 	// 	"",
-	// 	nil,
-	// 	nil,
 	// )
 	// exposedAction := producer.NewExposedAction(aAction)
 	// ts.exposedThing.On("ExposedAction", "on").Return(exposedAction, nil)
@@ -282,6 +274,8 @@ type ScheduleJobTestSuite struct {
 	suite.Suite
 	now      time.Time
 	olderNow time.Time
+	//	exposedAction *mocks.ExposedAction
+	onAction *action
 }
 
 func Test_ScheduleJobTestSuite(t *testing.T) {
@@ -293,6 +287,18 @@ func (ts *ScheduleJobTestSuite) SetupTest() {
 	ts.now = time.Date(2000, time.January, 1, 12, 0, 0, 0, time.UTC)
 	ts.olderNow = time.Date(2000, time.January, 1, 11, 0, 0, 0, time.UTC)
 	_cronScheduler = gocron.NewScheduler(time.UTC)
+	exposedThing := &mocks.ExposedThing{}
+	exposedAction := &mocks.ExposedAction{}
+
+	exposedAction.On("Run", exposedThing, "on", nil, map[string]string{}).Return(nil, nil)
+
+	ts.onAction = &action{
+		Ref:           "on",
+		ExposedThing:  exposedThing,
+		ExposedAction: exposedAction,
+		Parameters:    make(map[string]string),
+	}
+
 }
 
 // Initial Job - Matching condition
@@ -308,7 +314,7 @@ func (ts *ScheduleJobTestSuite) Test_InitialMatchingCondition() {
 				schedule: &scheduleImmediate{},
 			},
 		},
-		action: onAction,
+		action: ts.onAction,
 	}
 	ts.Nil(automation.job)
 	ts.Equal(time.Time{}, automation.lastScheduled)
@@ -334,7 +340,7 @@ func (ts *ScheduleJobTestSuite) Test_InitialNoMatchingCondition() {
 				schedule: &scheduleImmediate{},
 			},
 		},
-		action: onAction,
+		action: ts.onAction,
 	}
 	ts.Nil(automation.job)
 	ts.Equal(time.Time{}, automation.lastScheduled)
@@ -362,7 +368,7 @@ func (ts *ScheduleJobTestSuite) Test_ExistingMatchingConditionReplacingJob() {
 				},
 			},
 		},
-		action:        onAction,
+		action:        ts.onAction,
 		lastScheduled: ts.olderNow,
 		status:        "success",
 		job:           &scheduleImmediate{},
@@ -394,7 +400,7 @@ func (ts *ScheduleJobTestSuite) Test_ExistingNoMatchingCondition() {
 				},
 			},
 		},
-		action:        onAction,
+		action:        ts.onAction,
 		lastScheduled: ts.olderNow,
 		status:        "success",
 		job:           &scheduleImmediate{},
@@ -428,7 +434,7 @@ func (ts *ScheduleJobTestSuite) Test_ExistingMatchingConditionIdenticalJob() {
 				},
 			},
 		},
-		action:        onAction,
+		action:        ts.onAction,
 		lastScheduled: ts.olderNow,
 		status:        "success",
 		job: &scheduleAtHour{

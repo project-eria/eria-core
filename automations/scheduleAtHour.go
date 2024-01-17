@@ -120,7 +120,10 @@ func (s *scheduleAtHour) start(action Action) error {
 	}
 	cronJob, err := _cronScheduler.Every(1).Day().At(s.scheduledHour).Tag("atHour").Do(func() {
 		zlog.Info().Msg("Running scheduled job")
-		action.run()
+		err := action.run()
+		if err != nil {
+			zlog.Error().Err(err).Msg("Failed to run scheduled job")
+		}
 	})
 	if err != nil {
 		return err
