@@ -1,6 +1,7 @@
 package automations
 
 import (
+	"errors"
 	"testing"
 
 	"github.com/rs/zerolog"
@@ -43,6 +44,16 @@ func (ts *GetConditionsTestSuite) Test_SimpleContextCondition() {
 	ts.Equal([]string{"test"}, obs.contexts)
 	ts.Len(got, 1)
 	ts.Equal(&conditionContext{context: "test"}, got[0])
+}
+
+func (ts *GetConditionsTestSuite) Test_ContextConditionWithoutContextThing() {
+	newContextCondition = func(_ []string) (*conditionContext, error) {
+		return nil, errors.New("contexts thing not configured")
+	}
+	got, obs, err := getConditions([]string{"context|test"})
+	ts.EqualError(err, "contexts thing not configured")
+	ts.Nil(got)
+	ts.Nil(obs)
 }
 
 func (ts *GetConditionsTestSuite) Test_SimpleTimeCondition() {

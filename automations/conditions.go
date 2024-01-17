@@ -38,7 +38,7 @@ func getConditions(conditions []string) ([]Condition, *Observables, error) {
 		case "context":
 			c, err = newContextCondition(conditionArray)
 			// Add the context to the observables list
-			if c != nil {
+			if c.(*conditionContext) != nil {
 				observables.contexts = append(observables.contexts, c.(*conditionContext).context)
 			}
 		case "time":

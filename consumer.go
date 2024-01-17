@@ -27,13 +27,16 @@ func ConnectThing(url string, onConnected func(consumer.ConsumedThing), onError 
 func ConnectThings() {
 	wg := &sync.WaitGroup{}
 	_consumedThings = make(map[string]consumer.ConsumedThing)
+	wg.Add(len(eriaConfig.RemoteThings))
 	for ref, thingUrl := range eriaConfig.RemoteThings {
-		wg.Add(1)
+		ref := ref // Copy https://go.dev/doc/faq#closures_and_goroutines
+		thingUrl := thingUrl
 		Consumer().ConnectThing(thingUrl, func(t consumer.ConsumedThing) {
 			_consumedThings[ref] = t
 			wg.Done()
 		}, func(err error) {
 			zlog.Fatal().Err(err).Msg("[core:ConnectRemoteThings] Can't connect remote Thing")
+			wg.Done()
 		})
 	}
 	wg.Wait()
