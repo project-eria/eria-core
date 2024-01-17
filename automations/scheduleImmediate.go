@@ -8,7 +8,7 @@ type scheduleImmediate struct {
 }
 
 /**
- * `<empty>`: Immediate run
+ * `immediate`: Immediate run
  */
 // TODO should not activate on start, only on condition switch
 func NewScheduleImmediate(scheduleArray []string) (*scheduleImmediate, error) {
@@ -45,5 +45,5 @@ func (s *scheduleImmediate) equals(other Schedule) bool {
 }
 
 func (s *scheduleImmediate) string() string {
-	return "immediatelly"
+	return "immediately"
 }

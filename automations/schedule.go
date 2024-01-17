@@ -16,6 +16,7 @@ type Schedule interface {
 var (
 	newImmediateSchedule = NewScheduleImmediate
 	newAtHourSchedule    = NewScheduleAtHour
+	newNoneSchedule      = NewScheduleNone
 ) // Mocking for inner functions
 
 func getSchedule(schedule string) (Schedule, error) {
@@ -30,6 +31,8 @@ func getSchedule(schedule string) (Schedule, error) {
 		} else {
 			return nil, errors.New("invalid 'at' schedule type")
 		}
+	case "none":
+		return newNoneSchedule(scheduleArray)
 		// TODO case "every":
 		// TODO case: "in":
 	}

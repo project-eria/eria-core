@@ -60,7 +60,7 @@ func (p *EriaProducer) SetPropertyValue(t producer.ExposedThing, ref string, val
 			zlog.Error().Str("thing", t.Ref()).Str("property", ref).Interface("value", value).Err(err).Msg("[eriaproducer:SetPropertyValue]")
 		}
 		if changed {
-			zlog.Trace().Str("thing", t.Ref()).Str("property", ref).Interface("value", value).Msg("[eriaproducer:SetPropertyValue] value changed")
+			zlog.Info().Str("thing", t.Ref()).Str("property", ref).Interface("value", value).Msg("[eriaproducer:SetPropertyValue] value changed")
 			t.EmitPropertyChange(ref, value, nil)
 			return true
 		}
