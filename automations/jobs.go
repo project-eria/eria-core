@@ -27,23 +27,25 @@ func scheduleJobs(automations []AutomationConfig) {
 	// 	})
 
 	for _, automationConfig := range automations {
-		if exposedThing, ok := _exposedThings[automationConfig.Ref]; ok && exposedThing != nil {
-			automation, observables, err := getAutomation(automationConfig, exposedThing)
-			if err == nil {
-				automation.scheduleJob(now)
-				_automations[automationConfig.Ref] = automation
-				// Set the observables, for monitoring
-				for _, context := range observables.contexts {
-					if _, found := _contextsAutomations[context]; !found {
-						_contextsAutomations[context] = make([]*Automation, 0)
+		for _, ref := range automationConfig.Things {
+			if exposedThing, ok := _exposedThings[ref]; ok && exposedThing != nil {
+				automation, observables, err := getAutomation(automationConfig, exposedThing)
+				if err == nil {
+					automation.scheduleJob(now)
+					_automations[ref] = automation
+					// Set the observables, for monitoring
+					for _, context := range observables.contexts {
+						if _, found := _contextsAutomations[context]; !found {
+							_contextsAutomations[context] = make([]*Automation, 0)
+						}
+						_contextsAutomations[context] = append(_contextsAutomations[context], automation)
 					}
-					_contextsAutomations[context] = append(_contextsAutomations[context], automation)
+				} else {
+					zlog.Warn().Err(err).Str("automation", automationConfig.Name).Str("thing", ref).Msg("[automations:scheduleJobs] Skipped for thing")
 				}
 			} else {
-				zlog.Warn().Str("automation", automationConfig.Name).Msg("[automations:scheduleJobs] Skipped")
+				zlog.Error().Str("automation", automationConfig.Name).Str("thing", ref).Msg("[automations:scheduleJobs] Exposed thing not found, skipping...")
 			}
-		} else {
-			zlog.Error().Str("automation", automationConfig.Name).Str("things", automationConfig.Ref).Msg("[automations:scheduleJobs] Exposed thing not found, skipping...")
 		}
 	}
 }

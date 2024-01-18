@@ -6,6 +6,8 @@ import (
 	"reflect"
 	"strings"
 	"testing"
+
+	"github.com/rs/zerolog"
 )
 
 type testStruct struct {
@@ -47,6 +49,7 @@ func generateDefaultConfig() testStruct {
 }
 
 func TestInit(t *testing.T) {
+	zerolog.SetGlobalLevel(zerolog.Disabled)
 	currentEnv := os.Getenv("ERIA_CONF_PATH") // Save current env
 
 	// Create dummy file for file exist check

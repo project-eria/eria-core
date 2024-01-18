@@ -11,9 +11,9 @@ import (
 )
 
 type AutomationConfig struct {
-	Ref    string `yaml:"ref"` // thing ref
-	Name   string `yaml:"name" required:"true"`
-	Action string `yaml:"action" required:"true"`
+	Things []string `yaml:"things" required:"true"` // thing ref
+	Name   string   `yaml:"name" required:"true"`
+	Action string   `yaml:"action" required:"true"`
 	Groups []struct {
 		//	Name       string   `yaml:"name" required:"true"`
 		Schedule   string   `yaml:"schedule" required:"true"`
