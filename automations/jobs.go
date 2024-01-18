@@ -61,7 +61,7 @@ func getAutomation(automationConfig AutomationConfig, exposedThing producer.Expo
 
 	// Prepare action
 	zlog.Trace().Str("automation", automationConfig.Name).Str("action", automationConfig.Action).Msg("[automations:getAutomation] preparing action")
-	action, err := getAction(exposedThing, automationConfig.Action)
+	action, err := getAction(exposedThing, automationConfig.Name, automationConfig.Action)
 	if err != nil {
 		zlog.Error().Err(err).Str("automation", automationConfig.Name).Str("action", automationConfig.Action).Msg("[automations:getAutomation]")
 		return nil, nil, err // Skip this automation

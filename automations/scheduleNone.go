@@ -18,7 +18,7 @@ func NewScheduleNone(scheduleArray []string) (*scheduleNone, error) {
 	return &scheduleNone{}, nil
 }
 
-func (s *scheduleNone) start(action Action) error {
+func (s *scheduleNone) start(action ActionRunner) error {
 	if action == nil {
 		return errors.New("missing action")
 	}

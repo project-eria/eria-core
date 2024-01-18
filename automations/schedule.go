@@ -7,7 +7,7 @@ import (
 
 type Schedule interface {
 	job() error
-	start(Action) error
+	start(ActionRunner) error
 	equals(Schedule) bool
 	cancel()
 	string() string

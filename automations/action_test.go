@@ -36,34 +36,36 @@ func (ts *ActionTestSuite) SetupTest() {
 
 func (ts *ActionTestSuite) Test_Exists() {
 
-	got, err := getAction(ts.exposedThing, "on")
-	ts.Equal(got, &action{
-		Ref:           "on",
-		ExposedThing:  ts.exposedThing,
-		ExposedAction: ts.exposedAction,
-		Parameters:    make(map[string]string),
+	got, err := getAction(ts.exposedThing, "Name", "on")
+	ts.Equal(got, &Action{
+		Ref:            "on",
+		AutomationName: "Name",
+		ExposedThing:   ts.exposedThing,
+		ExposedAction:  ts.exposedAction,
+		Parameters:     make(map[string]string),
 	})
 	ts.Nil(err)
 }
 
 func (ts *ActionTestSuite) Test_NotExists() {
-	got, err := getAction(ts.exposedThing, "off")
+	got, err := getAction(ts.exposedThing, "Name", "off")
 	ts.Nil(got)
 	ts.EqualError(err, "exposed action not found")
 }
 
 func (ts *ActionTestSuite) Test_Invalid() {
-	got, err := getAction(ts.exposedThing, " ")
+	got, err := getAction(ts.exposedThing, "Name", " ")
 	ts.Nil(got)
 	ts.EqualError(err, "missing action configuration")
 }
 
 func (ts *ActionTestSuite) Test_WithParams() {
-	got, err := getAction(ts.exposedThing, "on|param1=true")
-	ts.Equal(got, &action{
-		Ref:           "on",
-		ExposedThing:  ts.exposedThing,
-		ExposedAction: ts.exposedAction,
+	got, err := getAction(ts.exposedThing, "Name", "on|param1=true")
+	ts.Equal(got, &Action{
+		Ref:            "on",
+		AutomationName: "Name",
+		ExposedThing:   ts.exposedThing,
+		ExposedAction:  ts.exposedAction,
 		Parameters: map[string]string{
 			"param1": "true",
 		},

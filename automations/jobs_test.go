@@ -275,7 +275,7 @@ type ScheduleJobTestSuite struct {
 	now      time.Time
 	olderNow time.Time
 	//	exposedAction *mocks.ExposedAction
-	onAction *action
+	onAction *Action
 }
 
 func Test_ScheduleJobTestSuite(t *testing.T) {
@@ -292,7 +292,7 @@ func (ts *ScheduleJobTestSuite) SetupTest() {
 
 	exposedAction.On("Run", exposedThing, "on", nil, map[string]string{}).Return(nil, nil)
 
-	ts.onAction = &action{
+	ts.onAction = &Action{
 		Ref:           "on",
 		ExposedThing:  exposedThing,
 		ExposedAction: exposedAction,

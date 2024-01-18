@@ -111,7 +111,7 @@ func NewScheduleAtHour(scheduleArray []string) (*scheduleAtHour, error) {
 	return s, nil
 }
 
-func (s *scheduleAtHour) start(action Action) error {
+func (s *scheduleAtHour) start(action ActionRunner) error {
 	if action == nil {
 		return errors.New("missing action")
 	}
@@ -119,10 +119,10 @@ func (s *scheduleAtHour) start(action Action) error {
 		return errors.New("missing scheduled hour")
 	}
 	cronJob, err := _cronScheduler.Every(1).Day().At(s.scheduledHour).Tag("atHour").Do(func() {
-		zlog.Info().Msg("Running scheduled job")
+		zlog.Info().Str("Automation", action.(*Action).AutomationName).Msg("Running scheduled job")
 		err := action.run()
 		if err != nil {
-			zlog.Error().Err(err).Msg("Failed to run scheduled job")
+			zlog.Error().Err(err).Str("Automation", action.(*Action).AutomationName).Msg("Failed to run scheduled job")
 		}
 	})
 	if err != nil {

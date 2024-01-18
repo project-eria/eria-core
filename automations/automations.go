@@ -32,7 +32,7 @@ type Automation struct {
 	job           Schedule
 	lastScheduled time.Time
 	status        string
-	action        Action
+	action        ActionRunner
 	exposedThing  producer.ExposedThing
 }
 

@@ -19,7 +19,7 @@ func NewScheduleImmediate(scheduleArray []string) (*scheduleImmediate, error) {
 	return &scheduleImmediate{}, nil
 }
 
-func (s *scheduleImmediate) start(action Action) error {
+func (s *scheduleImmediate) start(action ActionRunner) error {
 	if action == nil {
 		return errors.New("missing action")
 	}

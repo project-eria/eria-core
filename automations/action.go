@@ -7,22 +7,23 @@ import (
 	"github.com/project-eria/go-wot/producer"
 )
 
-type Action interface {
+type ActionRunner interface {
 	run() error
 }
 
-type action struct {
-	Ref           string
-	ExposedThing  producer.ExposedThing
-	Value         interface{}
-	Parameters    map[string]string
-	ExposedAction producer.ExposedAction
+type Action struct {
+	AutomationName string
+	Ref            string
+	ExposedThing   producer.ExposedThing
+	Value          interface{}
+	Parameters     map[string]string
+	ExposedAction  producer.ExposedAction
 }
 
 /**
  * `<action>|<value>|<param name>=<value>|<param name>=<value>`
  */
-func getAction(exposedThing producer.ExposedThing, actionStr string) (*action, error) {
+func getAction(exposedThing producer.ExposedThing, automationName string, actionStr string) (*Action, error) {
 	actionStr = strings.TrimSpace(actionStr)
 	if actionStr == "" {
 		return nil, errors.New("missing action configuration") // Skip this automation
@@ -49,16 +50,17 @@ func getAction(exposedThing producer.ExposedThing, actionStr string) (*action, e
 			parameters[paramName] = paramValue
 		}
 	}
-	return &action{
-		ExposedThing:  exposedThing,
-		Ref:           ref,
-		ExposedAction: exposedAction,
-		Value:         value,
-		Parameters:    parameters,
+	return &Action{
+		ExposedThing:   exposedThing,
+		Ref:            ref,
+		AutomationName: automationName,
+		ExposedAction:  exposedAction,
+		Value:          value,
+		Parameters:     parameters,
 	}, nil
 }
 
-func (a *action) run() error {
+func (a *Action) run() error {
 	// TODO: use parameters
 	if a.ExposedAction == nil {
 		return errors.New("missing action handler")
