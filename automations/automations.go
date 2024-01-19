@@ -33,7 +33,6 @@ type Automation struct {
 	lastScheduled time.Time
 	status        string
 	action        ActionRunner
-	exposedThing  producer.ExposedThing
 }
 
 var (
@@ -41,7 +40,6 @@ var (
 	_exposedThings  map[string]producer.ExposedThing
 	_consumedThings map[string]consumer.ConsumedThing
 	_location       *time.Location
-	_automations    = make(map[string]*Automation)
 
 	_contextsAutomations = make(map[string][]*Automation) // list of automations by context
 

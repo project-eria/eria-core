@@ -6,6 +6,7 @@ import (
 
 	"github.com/go-co-op/gocron"
 	"github.com/project-eria/go-wot/mocks"
+	"github.com/project-eria/go-wot/producer"
 	"github.com/rs/zerolog"
 	zlog "github.com/rs/zerolog/log"
 	"github.com/stretchr/testify/suite"
@@ -289,14 +290,14 @@ func (ts *ScheduleJobTestSuite) SetupTest() {
 	_cronScheduler = gocron.NewScheduler(time.UTC)
 	exposedThing := &mocks.ExposedThing{}
 	exposedAction := &mocks.ExposedAction{}
-
 	exposedAction.On("Run", exposedThing, "on", nil, map[string]string{}).Return(nil, nil)
+	exposedThing.On("ExposedAction", "on").Return(exposedAction, nil)
 
 	ts.onAction = &Action{
-		Ref:           "on",
-		ExposedThing:  exposedThing,
-		ExposedAction: exposedAction,
-		Parameters:    make(map[string]string),
+		AutomationName: "",
+		Ref:            "on",
+		ExposedThings:  map[string]producer.ExposedThing{"": exposedThing},
+		Parameters:     make(map[string]string),
 	}
 
 }

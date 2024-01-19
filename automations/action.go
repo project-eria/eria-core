@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/project-eria/go-wot/producer"
+	zlog "github.com/rs/zerolog/log"
 )
 
 type ActionRunner interface {
@@ -13,17 +14,16 @@ type ActionRunner interface {
 
 type Action struct {
 	AutomationName string
+	ExposedThings  map[string]producer.ExposedThing
 	Ref            string
-	ExposedThing   producer.ExposedThing
 	Value          interface{}
 	Parameters     map[string]string
-	ExposedAction  producer.ExposedAction
 }
 
 /**
  * `<action>|<value>|<param name>=<value>|<param name>=<value>`
  */
-func getAction(exposedThing producer.ExposedThing, automationName string, actionStr string) (*Action, error) {
+func getAction(thingRefs []string, automationName string, actionStr string) (*Action, error) {
 	actionStr = strings.TrimSpace(actionStr)
 	if actionStr == "" {
 		return nil, errors.New("missing action configuration") // Skip this automation
@@ -31,10 +31,26 @@ func getAction(exposedThing producer.ExposedThing, automationName string, action
 	actionArray := strings.Split(actionStr, "|")
 	ref := actionArray[0]
 
-	// Check if the action exists
-	exposedAction, err := exposedThing.ExposedAction(ref)
-	if err != nil {
-		return nil, err
+	things := map[string]producer.ExposedThing{}
+	oneValid := false
+	for _, thingRef := range thingRefs {
+		// Get the thing
+		if exposedThing, ok := _exposedThings[thingRef]; ok && exposedThing != nil {
+			// Check if the action exists
+			_, err := exposedThing.ExposedAction(ref)
+			if err != nil {
+				zlog.Error().Err(err).Str("automation", automationName).Str("thing", thingRef).Str("action", ref).Msg("[automations:getAction] Action not found")
+				continue // jump to next thing
+			}
+			oneValid = true
+			things[thingRef] = exposedThing
+		} else {
+			zlog.Error().Str("automation", automationName).Str("thing", thingRef).Str("action", ref).Msg("[automations:getAction] Thing not found")
+		}
+	}
+
+	if !oneValid {
+		return nil, errors.New("requested things action not found")
 	}
 
 	// Get the parameters
@@ -51,10 +67,9 @@ func getAction(exposedThing producer.ExposedThing, automationName string, action
 		}
 	}
 	return &Action{
-		ExposedThing:   exposedThing,
+		ExposedThings:  things,
 		Ref:            ref,
 		AutomationName: automationName,
-		ExposedAction:  exposedAction,
 		Value:          value,
 		Parameters:     parameters,
 	}, nil
@@ -62,10 +77,22 @@ func getAction(exposedThing producer.ExposedThing, automationName string, action
 
 func (a *Action) run() error {
 	// TODO: use parameters
-	if a.ExposedAction == nil {
-		return errors.New("missing action handler")
+	oneHasRun := false
+	for key, thing := range a.ExposedThings {
+		exposedAction, _ := thing.ExposedAction(a.Ref)
+		if exposedAction == nil {
+			return errors.New("missing action handler")
+		}
+		_, err := exposedAction.Run(thing, a.Ref, a.Value, a.Parameters)
+		// Note we don't do anything with the output
+		if err != nil {
+			zlog.Error().Err(err).Str("automation", a.AutomationName).Str("thing", key).Str("action", a.Ref).Msg("[automations:getAction] Action failed")
+			continue
+		}
+		oneHasRun = true
 	}
-	_, err := a.ExposedAction.Run(a.ExposedThing, a.Ref, a.Value, a.Parameters)
-	// Note we don't do anything with the output
-	return err
+	if !oneHasRun {
+		return errors.New("all things failed to run action")
+	}
+	return nil
 }

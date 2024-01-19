@@ -5,7 +5,6 @@ import (
 	"time"
 
 	"github.com/gookit/goutil/arrutil"
-	"github.com/project-eria/go-wot/producer"
 	zlog "github.com/rs/zerolog/log"
 )
 
@@ -27,25 +26,18 @@ func scheduleJobs(automations []AutomationConfig) {
 	// 	})
 
 	for _, automationConfig := range automations {
-		for _, ref := range automationConfig.Things {
-			if exposedThing, ok := _exposedThings[ref]; ok && exposedThing != nil {
-				automation, observables, err := getAutomation(automationConfig, exposedThing)
-				if err == nil {
-					automation.scheduleJob(now)
-					_automations[ref] = automation
-					// Set the observables, for monitoring
-					for _, context := range observables.contexts {
-						if _, found := _contextsAutomations[context]; !found {
-							_contextsAutomations[context] = make([]*Automation, 0)
-						}
-						_contextsAutomations[context] = append(_contextsAutomations[context], automation)
-					}
-				} else {
-					zlog.Warn().Err(err).Str("automation", automationConfig.Name).Str("thing", ref).Msg("[automations:scheduleJobs] Skipped for thing")
+		automation, observables, err := getAutomation(automationConfig)
+		if err == nil {
+			automation.scheduleJob(now)
+			// Set the observables, for monitoring
+			for _, context := range observables.contexts {
+				if _, found := _contextsAutomations[context]; !found {
+					_contextsAutomations[context] = make([]*Automation, 0)
 				}
-			} else {
-				zlog.Error().Str("automation", automationConfig.Name).Str("thing", ref).Msg("[automations:scheduleJobs] Exposed thing not found, skipping...")
+				_contextsAutomations[context] = append(_contextsAutomations[context], automation)
 			}
+		} else {
+			zlog.Warn().Err(err).Str("automation", automationConfig.Name).Msg("[automations:scheduleJobs] Skipping...")
 		}
 	}
 }
@@ -56,12 +48,12 @@ func scheduleJobs(automations []AutomationConfig) {
  * @param automation the automation details
  * @param exposedThing the exposed thing
  */
-func getAutomation(automationConfig AutomationConfig, exposedThing producer.ExposedThing) (*Automation, *Observables, error) {
+func getAutomation(automationConfig AutomationConfig) (*Automation, *Observables, error) {
 	zlog.Info().Str("automation", automationConfig.Name).Msg("[automations:getAutomation] Adding automation")
 
 	// Prepare action
 	zlog.Trace().Str("automation", automationConfig.Name).Str("action", automationConfig.Action).Msg("[automations:getAutomation] preparing action")
-	action, err := getAction(exposedThing, automationConfig.Name, automationConfig.Action)
+	action, err := getAction(automationConfig.Things, automationConfig.Name, automationConfig.Action)
 	if err != nil {
 		zlog.Error().Err(err).Str("automation", automationConfig.Name).Str("action", automationConfig.Action).Msg("[automations:getAutomation]")
 		return nil, nil, err // Skip this automation
@@ -97,10 +89,9 @@ func getAutomation(automationConfig AutomationConfig, exposedThing producer.Expo
 		}
 	}
 	return &Automation{
-		name:         automationConfig.Name,
-		exposedThing: exposedThing,
-		action:       action,
-		groups:       groups,
+		name:   automationConfig.Name,
+		action: action,
+		groups: groups,
 	}, observables, nil
 }
 

@@ -24,6 +24,9 @@ func Test_ActionTestSuite(t *testing.T) {
 func (ts *ActionTestSuite) SetupTest() {
 	zerolog.SetGlobalLevel(zerolog.Disabled)
 	ts.exposedThing = &mocks.ExposedThing{}
+	_exposedThings = map[string]producer.ExposedThing{
+		"a": ts.exposedThing,
+	}
 	aAction := interaction.NewAction(
 		"a",
 		"No Input, No Output",
@@ -35,40 +38,53 @@ func (ts *ActionTestSuite) SetupTest() {
 }
 
 func (ts *ActionTestSuite) Test_Exists() {
-
-	got, err := getAction(ts.exposedThing, "Name", "on")
-	ts.Equal(got, &Action{
+	got, err := getAction([]string{"a"}, "Name", "on")
+	ts.Nil(err)
+	ts.Equal(&Action{
 		Ref:            "on",
 		AutomationName: "Name",
-		ExposedThing:   ts.exposedThing,
-		ExposedAction:  ts.exposedAction,
+		ExposedThings:  map[string]producer.ExposedThing{"a": ts.exposedThing},
 		Parameters:     make(map[string]string),
-	})
+	}, got)
+}
+
+func (ts *ActionTestSuite) Test_OneThingNotExists() {
+	got, err := getAction([]string{"a", "b"}, "Name", "on")
 	ts.Nil(err)
+	ts.Equal(&Action{
+		Ref:            "on",
+		AutomationName: "Name",
+		ExposedThings:  map[string]producer.ExposedThing{"a": ts.exposedThing},
+		Parameters:     make(map[string]string),
+	}, got)
 }
 
-func (ts *ActionTestSuite) Test_NotExists() {
-	got, err := getAction(ts.exposedThing, "Name", "off")
+func (ts *ActionTestSuite) Test_AllThingsNotExist() {
+	got, err := getAction([]string{"b"}, "Name", "on")
+	ts.EqualError(err, "requested things action not found")
 	ts.Nil(got)
-	ts.EqualError(err, "exposed action not found")
 }
 
+func (ts *ActionTestSuite) Test_ActionNotExists() {
+	got, err := getAction([]string{"a"}, "Name", "off")
+	ts.EqualError(err, "requested things action not found")
+	ts.Nil(got)
+}
 func (ts *ActionTestSuite) Test_Invalid() {
-	got, err := getAction(ts.exposedThing, "Name", " ")
-	ts.Nil(got)
+	got, err := getAction([]string{"a"}, "Name", " ")
 	ts.EqualError(err, "missing action configuration")
+	ts.Nil(got)
 }
 
 func (ts *ActionTestSuite) Test_WithParams() {
-	got, err := getAction(ts.exposedThing, "Name", "on|param1=true")
-	ts.Equal(got, &Action{
+	got, err := getAction([]string{"a"}, "Name", "on|param1=true")
+	ts.Nil(err)
+	ts.Equal(&Action{
 		Ref:            "on",
 		AutomationName: "Name",
-		ExposedThing:   ts.exposedThing,
-		ExposedAction:  ts.exposedAction,
+		ExposedThings:  map[string]producer.ExposedThing{"a": ts.exposedThing},
 		Parameters: map[string]string{
 			"param1": "true",
 		},
-	})
-	ts.Nil(err)
+	}, got)
 }
