@@ -4,7 +4,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/project-eria/go-wot/mocks"
+	"github.com/project-eria/eria-core/consumer/mocks"
 	"github.com/rs/zerolog"
 	"github.com/stretchr/testify/suite"
 )
@@ -21,11 +21,15 @@ func Test_ContextConditionTestSuite(t *testing.T) {
 func (ts *ContextConditionTestSuite) SetupTest() {
 	zerolog.SetGlobalLevel(zerolog.Disabled)
 	ts.now = time.Date(2000, time.January, 1, 12, 0, 0, 0, time.UTC)
-	_contextsThing = &mocks.ConsumedThing{}
+	_consumer = &mocks.Consumer{}
+	thing := &mocks.Thing{}
+	_consumer.(*mocks.Consumer).On("ThingFromTag", "contexts").Return(thing)
 }
 
 func (ts *ContextConditionTestSuite) Test_NewNoContextsThing() {
-	_contextsThing = nil
+	_consumer = &mocks.Consumer{}
+	_consumer.(*mocks.Consumer).On("ThingFromTag", "contexts").Return(nil)
+
 	got, err := NewConditionContext([]string{"context", "test"})
 	ts.Nil(got)
 	ts.EqualError(err, "contexts thing not configured")

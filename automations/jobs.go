@@ -105,7 +105,9 @@ func (automation *Automation) scheduleJob(now time.Time) {
 		return // Skip this automation
 	}
 	if automation.job != nil {
+		zlog.Trace().Interface("current", automation.job).Interface("new", j).Msg("[automations:scheduleJob] comparing schedule")
 		if automation.job.equals(j) {
+			zlog.Trace().Str("automation", automation.name).Msg("[automations:scheduleJob] no change on Job")
 			return // No change
 		}
 		// Clean/Cancel previous job

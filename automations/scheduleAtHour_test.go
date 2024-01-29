@@ -6,8 +6,7 @@ import (
 	"time"
 
 	"github.com/go-co-op/gocron"
-	"github.com/project-eria/go-wot/consumer"
-	"github.com/project-eria/go-wot/mocks"
+	"github.com/project-eria/eria-core/consumer/mocks"
 	"github.com/rs/zerolog"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/suite"
@@ -15,7 +14,7 @@ import (
 
 type ScheduleAtHourTestSuite struct {
 	suite.Suite
-	consumedThings map[string]consumer.ConsumedThing
+	astralThing *mocks.Thing
 }
 
 func Test_ScheduleAtHourTestSuite(t *testing.T) {
@@ -24,12 +23,17 @@ func Test_ScheduleAtHourTestSuite(t *testing.T) {
 
 func (ts *ScheduleAtHourTestSuite) SetupTest() {
 	zerolog.SetGlobalLevel(zerolog.Disabled)
-	consumedThingMock := &mocks.ConsumedThing{}
-	consumedThingMock.On("ReadProperty", "timeProperty", mock.Anything).Return("2023-11-02T14:30:10Z", nil)
-	consumedThingMock.On("ReadProperty", "otherProperty", mock.Anything).Return("", errors.New("property otherProperty not found"))
-	ts.consumedThings = map[string]consumer.ConsumedThing{
-		"astral": consumedThingMock,
-	}
+	_consumer = &mocks.Consumer{}
+	ts.astralThing = &mocks.Thing{}
+	timeProperty := &mocks.Property{}
+	timeProperty.On("Value").Return("2023-11-02T14:30:10Z", nil)
+	timeProperty.On("UnObserve", mock.Anything).Return()
+	ts.astralThing.On("Property", "timeProperty").Return(timeProperty)
+	otherProperty := &mocks.Property{}
+	otherProperty.On("Value").Return("", errors.New("property otherProperty not found"))
+	ts.astralThing.On("Property", "otherProperty").Return(otherProperty)
+	_consumer.(*mocks.Consumer).On("ThingFromTag", "astral").Return(ts.astralThing)
+	_consumer.(*mocks.Consumer).On("ThingFromTag", mock.AnythingOfType("string")).Return(nil)
 }
 
 func (ts *ScheduleAtHourTestSuite) Test_NewNoParams() {
@@ -80,7 +84,7 @@ func (ts *ScheduleAtHourTestSuite) Test_NewThingNotExisting() {
 }
 
 func (ts *ScheduleAtHourTestSuite) Test_NewThingNotExistingProperty() {
-	_consumedThings = ts.consumedThings
+	//	_consumedThings = ts.consumedThings
 	got, err := NewScheduleAtHour([]string{"at", "hour", "astral:otherProperty"})
 	ts.EqualError(err, "time thing property not available: property otherProperty not found")
 	ts.Nil(got)
@@ -88,10 +92,10 @@ func (ts *ScheduleAtHourTestSuite) Test_NewThingNotExistingProperty() {
 
 func (ts *ScheduleAtHourTestSuite) Test_NewThingExistingProperty() {
 	s := &scheduleAtHour{
-		timeThing:    ts.consumedThings["astral"],
+		timeThing:    ts.astralThing,
 		propertyHour: "timeProperty",
 	}
-	_consumedThings = ts.consumedThings
+	//	_consumedThings = ts.consumedThings
 	got, err := NewScheduleAtHour([]string{"at", "hour", "astral:timeProperty"})
 	ts.Nil(err)
 	ts.Equal(s, got)
@@ -99,11 +103,10 @@ func (ts *ScheduleAtHourTestSuite) Test_NewThingExistingProperty() {
 
 func (ts *ScheduleAtHourTestSuite) Test_NewThingExistingPropertyWithMin() {
 	s := &scheduleAtHour{
-		timeThing:    ts.consumedThings["astral"],
+		timeThing:    ts.astralThing,
 		propertyHour: "timeProperty",
 		min:          "14:20",
 	}
-	_consumedThings = ts.consumedThings
 	got, err := NewScheduleAtHour([]string{"at", "hour", "astral:timeProperty", "min=14:20"})
 	ts.Nil(err)
 	ts.Equal(s, got)
@@ -111,11 +114,10 @@ func (ts *ScheduleAtHourTestSuite) Test_NewThingExistingPropertyWithMin() {
 
 func (ts *ScheduleAtHourTestSuite) Test_NewThingExistingPropertyWithMax() {
 	s := &scheduleAtHour{
-		timeThing:    ts.consumedThings["astral"],
+		timeThing:    ts.astralThing,
 		propertyHour: "timeProperty",
 		max:          "14:40",
 	}
-	_consumedThings = ts.consumedThings
 	got, err := NewScheduleAtHour([]string{"at", "hour", "astral:timeProperty", "max=14:40"})
 	ts.Nil(err)
 	ts.Equal(s, got)
@@ -123,12 +125,11 @@ func (ts *ScheduleAtHourTestSuite) Test_NewThingExistingPropertyWithMax() {
 
 func (ts *ScheduleAtHourTestSuite) Test_NewThingExistingPropertyWithMinMax() {
 	s := &scheduleAtHour{
-		timeThing:    ts.consumedThings["astral"],
+		timeThing:    ts.astralThing,
 		propertyHour: "timeProperty",
 		min:          "14:20",
 		max:          "14:40",
 	}
-	_consumedThings = ts.consumedThings
 	got, err := NewScheduleAtHour([]string{"at", "hour", "astral:timeProperty", "min=14:20", "max=14:40"})
 	ts.Nil(err)
 	ts.Equal(s, got)

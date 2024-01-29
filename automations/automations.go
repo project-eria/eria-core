@@ -5,7 +5,7 @@ import (
 
 	"github.com/go-co-op/gocron"
 	"github.com/gookit/goutil/arrutil"
-	"github.com/project-eria/go-wot/consumer"
+	eriaconsumer "github.com/project-eria/eria-core/consumer"
 	"github.com/project-eria/go-wot/producer"
 	zlog "github.com/rs/zerolog/log"
 )
@@ -36,16 +36,13 @@ type Automation struct {
 }
 
 var (
-	_contextsThing  consumer.ConsumedThing
-	_exposedThings  map[string]producer.ExposedThing
-	_consumedThings map[string]consumer.ConsumedThing
-	_location       *time.Location
-
+	_exposedThings       map[string]producer.ExposedThing
+	_location            *time.Location
 	_contextsAutomations = make(map[string][]*Automation) // list of automations by context
 
 	_activeContexts = []string{} // The currently active contexts
-
-	_cronScheduler *gocron.Scheduler
+	_consumer       eriaconsumer.Consumer
+	_cronScheduler  *gocron.Scheduler
 )
 
 /**
@@ -54,21 +51,22 @@ var (
  * @param automations the automations list
  * @param contextsThing the thing service to retrive contexts
  */
-func Start(location *time.Location, automations []AutomationConfig, contextsThingRef string, exposedThings map[string]producer.ExposedThing, consumedThings map[string]consumer.ConsumedThing, cronScheduler *gocron.Scheduler) {
+func Start(location *time.Location, automations []AutomationConfig, exposedThings map[string]producer.ExposedThing, consumer *eriaconsumer.EriaConsumer, cronScheduler *gocron.Scheduler) {
 	_exposedThings = exposedThings
-	_consumedThings = consumedThings
+	_consumer = consumer
 	_location = location
 	_cronScheduler = cronScheduler
-	if _, found := consumedThings[contextsThingRef]; !found {
-		zlog.Warn().Str("thing", contextsThingRef).Msg("[automations:Start] Contexts thing not found, contexts will not be used")
+
+	contextsThing := _consumer.ThingFromTag("contexts")
+	if contextsThing == nil {
+		zlog.Warn().Msg("[automations:Start] Contexts thing not found, contexts will not be used")
 	} else {
-		_contextsThing = consumedThings[contextsThingRef]
-		rawContexts, err := _contextsThing.ReadProperty("actives", nil)
+		rawContexts, err := contextsThing.Property("actives").Value()
 		if err == nil {
 			// Save the current active contexts
 			_activeContexts = arrutil.MustToStrings(rawContexts)
 			// Monitor context changes
-			_contextsThing.ObserveProperty("actives", nil, func(value interface{}, err error) {
+			contextsThing.Property("actives").Observe(func(value interface{}, err error) {
 				if err == nil {
 					current := arrutil.MustToStrings(value)
 					diff := arrutil.Diff(_activeContexts, current, arrutil.StringEqualsComparer)
@@ -88,7 +86,7 @@ func Start(location *time.Location, automations []AutomationConfig, contextsThin
 				}
 			})
 		} else {
-			zlog.Warn().Str("thing", contextsThingRef).Msg("[automations:Start] Contexts thing not rechable, contexts will not be used")
+			zlog.Warn().Msg("[automations:Start] Contexts thing not rechable, contexts will not be used")
 		}
 	}
 	scheduleJobs(automations)

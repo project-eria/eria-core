@@ -45,7 +45,7 @@ func (ts *GetJobTestSuite) SetupTest() {
 	// }
 
 	// contextsThing
-	_contextsThing = &mocks.ConsumedThing{}
+	//	_contextsThing = &mocks.ConsumedThing{}
 	_activeContexts = []string{"holiday"}
 	// _location = time.UTC
 }

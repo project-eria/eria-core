@@ -23,14 +23,17 @@ No condition means it is executed by default.
 	- thing hour property: `at|<thing device>=<thing property>`
 		- min option: `at|<thing device>=<thing property>|min=<hour in 15:00 format>`
 		- max option: `at|<thing device>=<thing property>|max=<hour in 15:00 format>`
-??l'action est planifiée dans un cron, et une re-compilation tout les jours est nécessaire (par défaut matin à 3h, à cause du changement heure été|hivers, mais modifiable)
-	- L'action est listée dans une liste 'scheduled'
 
 - `every|<delay (10m, 1h, ...)>`, ??l'action est planifiée dans un cron, et une re-evaluation à chaque boucle
+?Monday at 1pm?
 - `in|<delay (10m, 1h, ...)>`, ??l'action est planifiée et executée 1 fois
 
-- ??Si `context` une re-evaluation à chaque changement
-- ??Si `property`une re-evaluation à chaque changement
+### Stop option
+(compatible avec seulement certains scheduling?)
+- `for|<delay (10m, 1h, ...)>`
+- `until|<time>`
+Note: besoin de données pour stopper l'action
+
 
 ## e.g. Planned once, executed all times
 - `name: <name description>`

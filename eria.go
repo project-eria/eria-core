@@ -9,7 +9,6 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/project-eria/go-wot/consumer"
 	"github.com/rs/zerolog"
 	zlog "github.com/rs/zerolog/log"
 )
@@ -17,18 +16,17 @@ import (
 var (
 	// Version is a placeholder that will receive the git tag version during build time
 	// go build -v -ldflags "-X github.com/project-eria/eria-core.AppVersion=vx.x.x
-	AppVersion      = "-"
-	BuildDate       = "-"
-	CoreVersion     = "-"
-	_logLevel       = zerolog.InfoLevel
-	_configPath     *string
-	_logPath        *string
-	_logFormat      *string
-	_logOutput      *os.File
-	_logNoColor     = false
-	_appName        string
-	_consumedThings map[string]consumer.ConsumedThing
-	_location       *time.Location
+	AppVersion  = "-"
+	BuildDate   = "-"
+	CoreVersion = "-"
+	_logLevel   = zerolog.InfoLevel
+	_configPath *string
+	_logPath    *string
+	_logFormat  *string
+	_logOutput  *os.File
+	_logNoColor = false
+	_appName    string
+	_location   *time.Location
 )
 
 // Init gets the app name and version and displays app version if requested

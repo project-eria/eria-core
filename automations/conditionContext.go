@@ -19,7 +19,8 @@ type conditionContext struct {
  *	- not: `context/!<context name>`
  */
 func NewConditionContext(conditionArray []string) (*conditionContext, error) {
-	if _contextsThing == nil {
+	contextsThing := _consumer.ThingFromTag("contexts")
+	if contextsThing == nil {
 		return nil, errors.New("contexts thing not configured")
 	}
 	// Check if the condition has the correct number of parameters
