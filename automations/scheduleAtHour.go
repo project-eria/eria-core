@@ -113,6 +113,12 @@ func NewScheduleAtHour(scheduleArray []string) (*scheduleAtHour, error) {
 }
 
 func (s *scheduleAtHour) start(action ActionRunner) error {
+	var automationName string
+	if a, ok := action.(*Action); ok {
+		// If not in mock
+		automationName = a.AutomationName
+	}
+
 	if action == nil {
 		return errors.New("missing action")
 	}
@@ -120,10 +126,10 @@ func (s *scheduleAtHour) start(action ActionRunner) error {
 		return errors.New("missing scheduled hour")
 	}
 	cronJob, err := _cronScheduler.Every(1).Day().At(s.scheduledHour).Tag("atHour").Do(func() {
-		zlog.Info().Str("Automation", action.(*Action).AutomationName).Msg("[automations:scheduleAtHour] Running scheduled job")
+		zlog.Info().Str("Automation", automationName).Msg("[automations:scheduleAtHour] Running scheduled job")
 		err := action.run()
 		if err != nil {
-			zlog.Error().Err(err).Str("Automation", action.(*Action).AutomationName).Msg("[automations:scheduleAtHour:start] Failed to run scheduled job")
+			zlog.Error().Err(err).Str("Automation", automationName).Msg("[automations:scheduleAtHour:start] Failed to run scheduled job")
 		}
 	})
 	if err != nil {
@@ -140,7 +146,7 @@ func (s *scheduleAtHour) start(action ActionRunner) error {
 					zlog.Error().Err(err).Msg("[automations:scheduleAtHour:start] Invalid time thing value")
 					return
 				}
-				zlog.Info().Str("Automation", action.(*Action).AutomationName).Msgf("[automations:scheduleAtHour] Schedule hour changed, rescheduling %s -> %s", s.scheduledHour, hour)
+				zlog.Info().Str("Automation", automationName).Msgf("[automations:scheduleAtHour] Schedule hour changed, rescheduling %s -> %s", s.scheduledHour, hour)
 				s.scheduledHour = hour
 
 				// Cancelling the previous job
@@ -152,10 +158,10 @@ func (s *scheduleAtHour) start(action ActionRunner) error {
 
 				// Re-Scheduling the job
 				cronJob, err := _cronScheduler.Every(1).Day().At(s.scheduledHour).Tag("atHour").Do(func() {
-					zlog.Info().Str("Automation", action.(*Action).AutomationName).Msg("[automations:scheduleAtHour] Running scheduled job")
+					zlog.Info().Str("Automation", automationName).Msg("[automations:scheduleAtHour] Running scheduled job")
 					err := action.run()
 					if err != nil {
-						zlog.Error().Err(err).Str("Automation", action.(*Action).AutomationName).Msg("[automations:scheduleAtHour:start] Failed to run scheduled job")
+						zlog.Error().Err(err).Str("Automation", automationName).Msg("[automations:scheduleAtHour:start] Failed to run scheduled job")
 					}
 				})
 				if err != nil {

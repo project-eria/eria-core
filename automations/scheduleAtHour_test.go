@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/go-co-op/gocron"
+	eriaconsumer "github.com/project-eria/eria-core/consumer"
 	"github.com/project-eria/eria-core/consumer/mocks"
 	"github.com/rs/zerolog"
 	"github.com/stretchr/testify/mock"
@@ -14,7 +15,9 @@ import (
 
 type ScheduleAtHourTestSuite struct {
 	suite.Suite
-	astralThing *mocks.Thing
+	astralThing  *mocks.Thing
+	timeProperty *mocks.Property
+	observer     eriaconsumer.PropertyObserver
 }
 
 func Test_ScheduleAtHourTestSuite(t *testing.T) {
@@ -25,10 +28,15 @@ func (ts *ScheduleAtHourTestSuite) SetupTest() {
 	zerolog.SetGlobalLevel(zerolog.Disabled)
 	_consumer = &mocks.Consumer{}
 	ts.astralThing = &mocks.Thing{}
-	timeProperty := &mocks.Property{}
-	timeProperty.On("Value").Return("2023-11-02T14:30:10Z", nil)
-	timeProperty.On("UnObserve", mock.Anything).Return()
-	ts.astralThing.On("Property", "timeProperty").Return(timeProperty)
+	ts.timeProperty = &mocks.Property{}
+	ts.observer = nil
+	ts.timeProperty.On("Value").Return("2023-11-02T14:30:10Z", nil)
+	ts.timeProperty.On("Observe", mock.AnythingOfTypeArgument("eriaconsumer.PropertyObserver")).Return(func(s eriaconsumer.PropertyObserver) uint16 {
+		ts.observer = s
+		return uint16(0)
+	}, nil)
+	ts.timeProperty.On("UnObserve", mock.Anything).Return()
+	ts.astralThing.On("Property", "timeProperty").Return(ts.timeProperty)
 	otherProperty := &mocks.Property{}
 	otherProperty.On("Value").Return("", errors.New("property otherProperty not found"))
 	ts.astralThing.On("Property", "otherProperty").Return(otherProperty)
@@ -245,5 +253,47 @@ func (ts *ScheduleAtHourTestSuite) Test_Cancel() {
 	ts.Equal(_cronScheduler.Len(), 1)
 	s.cancel()
 	ts.Equal(_cronScheduler.Len(), 0)
+	action.AssertNotCalled(ts.T(), "run")
+}
+
+func (ts *ScheduleAtHourTestSuite) Test_StartWithPropertyHour() {
+	action := &MockedAction{}
+	_cronScheduler = gocron.NewScheduler(time.UTC)
+	s := &scheduleAtHour{
+		scheduledHour: "12:20",
+		timeThing:     ts.astralThing,
+		propertyHour:  "timeProperty",
+	}
+	err := s.start(action)
+	ts.Nil(err)
+	ts.NotNil(s.cronJob)
+	ts.Equal("12:20", s.scheduledHour)
+	ts.Equal("12:20", s.cronJob.ScheduledAtTime())
+	ts.Equal(_cronScheduler.Len(), 1)
+	ts.timeProperty.AssertCalled(ts.T(), "Observe", mock.Anything)
+	ts.NotNil(ts.observer)
+	action.AssertNotCalled(ts.T(), "run")
+}
+
+func (ts *ScheduleAtHourTestSuite) Test_StartWithPropertyHourChange() {
+	action := &MockedAction{}
+	_cronScheduler = gocron.NewScheduler(time.UTC)
+	s := &scheduleAtHour{
+		scheduledHour: "12:20",
+		timeThing:     ts.astralThing,
+		propertyHour:  "timeProperty",
+	}
+	err := s.start(action)
+	ts.Nil(err)
+	var old = s.cronJob
+	ts.Equal("12:20", s.scheduledHour)
+	ts.Equal("12:20", s.cronJob.ScheduledAtTime())
+	ts.observer("2000-01-01T15:00:00+01:00", nil)
+	ts.Equal("15:00", s.scheduledHour)
+	ts.Equal("15:00", s.cronJob.ScheduledAtTime())
+	ts.NotEqual(old, s.cronJob)
+	ts.Equal(_cronScheduler.Len(), 1)
+	ts.timeProperty.AssertCalled(ts.T(), "Observe", mock.Anything)
+	ts.NotNil(ts.observer)
 	action.AssertNotCalled(ts.T(), "run")
 }

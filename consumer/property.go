@@ -39,33 +39,34 @@ func PropertyUriVariables(uriVariables map[string]interface{}) PropertyOption {
 func (t *EriaThing) Property(key string, opts ...PropertyOption) Property {
 	if t == nil {
 		zlog.Error().Msg("[core:consumer:Property] nil Thing")
-		return EriaProperty{}
+		return nil
 	}
 
 	// TODO test if property exists ? or defer to Value/Observe?
 
-	p := EriaProperty{
+	p := &EriaProperty{
 		key:   key,
 		thing: t,
 	}
 	// Apply options
 	for _, opt := range opts {
-		opt(&p)
+		opt(p)
 	}
 
 	return p
 }
 
-func (p EriaProperty) Value() (interface{}, error) {
+func (p *EriaProperty) Value() (interface{}, error) {
 	return p.thing.ReadProperty(p.key, p.uriVariables)
 }
 
-func (p EriaProperty) Observe(listener PropertyObserver) (uint16, error) {
+func (p *EriaProperty) Observe(listener PropertyObserver) (uint16, error) {
 	var err error
 	if len(p.observers) == 0 {
 		// No observateur yet, we connect the property
 		err = p.thing.ObserveProperty(p.key, p.uriVariables, p.observer())
 	}
+
 	if err != nil {
 		return 0, err
 	}
@@ -73,7 +74,7 @@ func (p EriaProperty) Observe(listener PropertyObserver) (uint16, error) {
 	return uint16(len(p.observers) - 1), nil
 }
 
-func (p EriaProperty) UnObserve(ref uint16) error {
+func (p *EriaProperty) UnObserve(ref uint16) error {
 	if p.observers[ref] == nil {
 		return errors.New("invalid observer reference")
 	}
@@ -85,9 +86,10 @@ func (p EriaProperty) UnObserve(ref uint16) error {
 	return nil
 }
 
-func (p EriaProperty) observer() func(value interface{}, err error) {
+func (p *EriaProperty) observer() func(value interface{}, err error) {
 	// We send the notification to all observers
 	return func(value interface{}, err error) {
+		zlog.Trace().Int("observers", len(p.observers)).Msg("[core:consumer:Property:observer] notifying observers")
 		for _, observer := range p.observers {
 			observer(value, err)
 		}
