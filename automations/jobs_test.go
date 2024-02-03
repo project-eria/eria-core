@@ -4,7 +4,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/go-co-op/gocron"
+	"github.com/go-co-op/gocron/v2"
 	"github.com/project-eria/go-wot/mocks"
 	"github.com/project-eria/go-wot/producer"
 	"github.com/rs/zerolog"
@@ -249,6 +249,7 @@ func (ts *GetJobTestSuite) Test_MatchingMultipleGroups2() {
 
 // Matching condition with at hour create
 func (ts *GetJobTestSuite) Test_MatchingConditionWithAtHour() {
+	t, _ := time.Parse("15:04", "13:00")
 	automation := &Automation{
 		groups: []group{
 			{
@@ -258,15 +259,14 @@ func (ts *GetJobTestSuite) Test_MatchingConditionWithAtHour() {
 					},
 				},
 				schedule: &scheduleAtHour{
-					fixedHour: "13:00",
+					scheduledTime: &t,
 				},
 			},
 		},
 	}
 	j, err := automation.getJob(ts.now)
 	ts.Equal(&scheduleAtHour{
-		fixedHour:     "13:00",
-		scheduledHour: "13:00",
+		scheduledTime: &t,
 	}, j)
 	ts.Nil(err)
 }
@@ -287,7 +287,9 @@ func (ts *ScheduleJobTestSuite) SetupTest() {
 	zerolog.SetGlobalLevel(zerolog.Disabled)
 	ts.now = time.Date(2000, time.January, 1, 12, 0, 0, 0, time.UTC)
 	ts.olderNow = time.Date(2000, time.January, 1, 11, 0, 0, 0, time.UTC)
-	_cronScheduler = gocron.NewScheduler(time.UTC)
+	_cronScheduler, _ = gocron.NewScheduler(
+		gocron.WithLocation(time.UTC),
+	)
 	exposedThing := &mocks.ExposedThing{}
 	exposedAction := &mocks.ExposedAction{}
 	exposedAction.On("Run", exposedThing, "on", nil, map[string]string{}).Return(nil, nil)
@@ -356,6 +358,7 @@ func (ts *ScheduleJobTestSuite) Test_InitialNoMatchingCondition() {
 
 // Existing Job - Matchingcondition, replacing job
 func (ts *ScheduleJobTestSuite) Test_ExistingMatchingConditionReplacingJob() {
+	t, _ := time.Parse("15:04", "13:00")
 	automation := &Automation{
 		groups: []group{
 			{
@@ -365,7 +368,7 @@ func (ts *ScheduleJobTestSuite) Test_ExistingMatchingConditionReplacingJob() {
 					},
 				},
 				schedule: &scheduleAtHour{
-					fixedHour: "13:00",
+					scheduledTime: &t,
 				},
 			},
 		},
@@ -380,7 +383,7 @@ func (ts *ScheduleJobTestSuite) Test_ExistingMatchingConditionReplacingJob() {
 
 	automation.scheduleJob(ts.now)
 	ts.NotNil(automation.job)
-	ts.Equal("13:00", automation.job.(*scheduleAtHour).scheduledHour)
+	ts.Equal("13:00", automation.job.(*scheduleAtHour).scheduledTime.Format("15:04"))
 	ts.Equal(ts.now, automation.lastScheduled)
 	ts.Equal("success", automation.status)
 	// TODO does the old job been canceled?
@@ -388,6 +391,7 @@ func (ts *ScheduleJobTestSuite) Test_ExistingMatchingConditionReplacingJob() {
 
 // Existing Job - No Matching condition
 func (ts *ScheduleJobTestSuite) Test_ExistingNoMatchingCondition() {
+	t, _ := time.Parse("15:04", "13:00")
 	automation := &Automation{
 		groups: []group{
 			{
@@ -397,7 +401,7 @@ func (ts *ScheduleJobTestSuite) Test_ExistingNoMatchingCondition() {
 					},
 				},
 				schedule: &scheduleAtHour{
-					fixedHour: "13:00",
+					scheduledTime: &t,
 				},
 			},
 		},
@@ -419,9 +423,21 @@ func (ts *ScheduleJobTestSuite) Test_ExistingNoMatchingCondition() {
 
 // Existing Job - Matching condition, indentical job
 func (ts *ScheduleJobTestSuite) Test_ExistingMatchingConditionIdenticalJob() {
-	cronJob, _ := _cronScheduler.Every(1).Day().At("12:00").Tag("atHour").Do(func() {
-		zlog.Info().Msg("Running scheduled job")
-	})
+	cronJob, _ := _cronScheduler.NewJob(
+		gocron.DailyJob(1,
+			gocron.NewAtTimes(
+				gocron.NewAtTime(12, 0, 0),
+			),
+		),
+		gocron.NewTask(
+			func() {
+				zlog.Info().Msg("Running scheduled job")
+			},
+		),
+		gocron.WithTags("core", "automation", "atHour"),
+	)
+	_cronScheduler.Start()
+	t, _ := time.Parse("15:04", "13:00")
 	automation := &Automation{
 		groups: []group{
 			{
@@ -431,7 +447,7 @@ func (ts *ScheduleJobTestSuite) Test_ExistingMatchingConditionIdenticalJob() {
 					},
 				},
 				schedule: &scheduleAtHour{
-					fixedHour: "13:00",
+					scheduledTime: &t,
 				},
 			},
 		},
@@ -440,18 +456,21 @@ func (ts *ScheduleJobTestSuite) Test_ExistingMatchingConditionIdenticalJob() {
 		status:        "success",
 		job: &scheduleAtHour{
 			cronJob:       cronJob,
-			fixedHour:     "12:00", // Not similar to scheduled to detect if replaced
-			scheduledHour: "13:00",
+			scheduledTime: &t,
 		},
 	}
 	ts.NotNil(automation.job)
-	ts.Equal("12:00", automation.job.(*scheduleAtHour).fixedHour)
+	j, _ := cronJob.NextRun()
+	ts.Equal("12:00", j.Format("15:04"))
+
 	ts.Equal(ts.olderNow, automation.lastScheduled)
 	ts.Equal("success", automation.status)
 
 	automation.scheduleJob(ts.now)
 	ts.NotNil(automation.job)
-	ts.Equal("12:00", automation.job.(*scheduleAtHour).fixedHour)
+	j, _ = cronJob.NextRun()
+	ts.Equal("12:00", j.Format("15:04"))
+
 	ts.Equal(ts.olderNow, automation.lastScheduled)
 	ts.Equal("success", automation.status)
 	// TODO the old job hasn't been canceled?

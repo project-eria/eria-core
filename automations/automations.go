@@ -3,7 +3,7 @@ package automations
 import (
 	"time"
 
-	"github.com/go-co-op/gocron"
+	"github.com/go-co-op/gocron/v2"
 	"github.com/gookit/goutil/arrutil"
 	eriaconsumer "github.com/project-eria/eria-core/consumer"
 	"github.com/project-eria/go-wot/producer"
@@ -42,7 +42,7 @@ var (
 
 	_activeContexts = []string{} // The currently active contexts
 	_consumer       eriaconsumer.Consumer
-	_cronScheduler  *gocron.Scheduler
+	_cronScheduler  gocron.Scheduler
 )
 
 /**
@@ -51,7 +51,7 @@ var (
  * @param automations the automations list
  * @param contextsThing the thing service to retrive contexts
  */
-func Start(location *time.Location, automations []AutomationConfig, exposedThings map[string]producer.ExposedThing, consumer *eriaconsumer.EriaConsumer, cronScheduler *gocron.Scheduler) {
+func Start(location *time.Location, automations []AutomationConfig, exposedThings map[string]producer.ExposedThing, consumer *eriaconsumer.EriaConsumer, cronScheduler gocron.Scheduler) {
 	_exposedThings = exposedThings
 	_consumer = consumer
 	_location = location

@@ -6,29 +6,24 @@ import (
 	"strings"
 	"time"
 
-	"github.com/go-co-op/gocron"
+	"github.com/go-co-op/gocron/v2"
 	eriaconsumer "github.com/project-eria/eria-core/consumer"
 	zlog "github.com/rs/zerolog/log"
 )
 
 /**
  * Automation based on Time
- * The action is planned using gocron, and re-builded every day at 3:00 by default
- * (because of the summer/winter times changes), but that can be changed
  */
 
-// TODO - re-build at specific time
-// TODO - thing hour
-
 type scheduleAtHour struct {
-	cronJob       *gocron.Job
-	fixedHour     string // Keep as string for futur time comparison
-	timeThing     eriaconsumer.Thing
-	propertyHour  string
-	min           string // Keep as string for futur time comparison
-	max           string // Keep as string for futur time comparison
-	scheduledHour string
-	observerRef   uint16
+	cronJob gocron.Job
+	//	fixedHour         *time.Time
+	timeThing         eriaconsumer.Thing
+	timeThingProperty string
+	min               *time.Time
+	max               *time.Time
+	scheduledTime     *time.Time
+	observerRef       uint16
 }
 
 /**
@@ -49,36 +44,29 @@ func NewScheduleAtHour(scheduleArray []string) (*scheduleAtHour, error) {
 
 	s := &scheduleAtHour{}
 
-	// Test fixed hour: `at|hour|<hour in 15:04 format>`
-	_, err := time.Parse("15:04", scheduleArray[2])
+	// Test if hour in 15:04/15:04:05 format`
+	t, err := HourToTime(scheduleArray[2])
 	if err == nil {
 		// Correct time format
-		s.fixedHour = scheduleArray[2]
+		s.scheduledTime = &t
 		return s, nil
-	}
-	// Test fixed hour: `at|hour|<hour in 15:04:05 format>`
-	_, err = time.Parse("15:04:05", scheduleArray[2])
-	if err == nil {
-		// Correct time format
-		s.fixedHour = scheduleArray[2]
-		return s, nil // Remove the seconds part
 	}
 
 	// Test if min/max is set
 	if len(scheduleArray) > 3 {
 		for i := 3; i < len(scheduleArray); i++ {
 			if strings.HasPrefix(scheduleArray[i], "min=") {
-				_, err := time.Parse("15:04", scheduleArray[i][4:])
+				t, err := HourToTime(scheduleArray[i][4:])
 				if err != nil {
 					return nil, errors.New("invalid min time: " + err.Error())
 				}
-				s.min = scheduleArray[i][4:]
+				s.min = &t
 			} else if strings.HasPrefix(scheduleArray[i], "max=") {
-				_, err := time.Parse("15:04", scheduleArray[i][4:])
+				t, err := HourToTime(scheduleArray[i][4:])
 				if err != nil {
 					return nil, errors.New("invalid max time: " + err.Error())
 				}
-				s.max = scheduleArray[i][4:]
+				s.max = &t
 			}
 		}
 	}
@@ -100,11 +88,11 @@ func NewScheduleAtHour(scheduleArray []string) (*scheduleAtHour, error) {
 	if err != nil {
 		return nil, errors.New("time thing property not available: " + err.Error())
 	}
-	s.propertyHour = timeThingArray[1]
+	s.timeThingProperty = timeThingArray[1]
 
 	// Does the time thing value is valid?
 	// TODO the format can be customised?
-	_, err = time.Parse(time.RFC3339, timeThingValue.(string))
+	_, err = DateToHour(timeThingValue.(string))
 	if err != nil {
 		return nil, errors.New("invalid time thing value: " + err.Error())
 	}
@@ -122,48 +110,37 @@ func (s *scheduleAtHour) start(action ActionRunner) error {
 	if action == nil {
 		return errors.New("missing action")
 	}
-	if s.scheduledHour == "" {
+	if s.scheduledTime == nil {
 		return errors.New("missing scheduled hour")
 	}
-	cronJob, err := _cronScheduler.Every(1).Day().At(s.scheduledHour).Tag("atHour").Do(func() {
-		zlog.Info().Str("Automation", automationName).Msg("[automations:scheduleAtHour] Running scheduled job")
-		err := action.run()
-		if err != nil {
-			zlog.Error().Err(err).Str("Automation", automationName).Msg("[automations:scheduleAtHour:start] Failed to run scheduled job")
-		}
-	})
+
+	cronJob, err := s.scheduleTask(automationName, action)
 	if err != nil {
 		return err
 	}
 	s.cronJob = cronJob
 
-	if s.propertyHour != "" {
+	if s.timeThingProperty != "" {
 		// Observe the property, in case of the hour property changes
-		s.observerRef, _ = s.timeThing.Property(s.propertyHour).Observe(func(value interface{}, err error) {
+		s.observerRef, _ = s.timeThing.Property(s.timeThingProperty).Observe(func(value interface{}, err error) {
 			if err == nil {
 				hour, err := getPropertyHour(value.(string), s.min, s.max)
 				if err != nil {
 					zlog.Error().Err(err).Msg("[automations:scheduleAtHour:start] Invalid time thing value")
 					return
 				}
-				zlog.Info().Str("Automation", automationName).Msgf("[automations:scheduleAtHour] Schedule hour changed, rescheduling %s -> %s", s.scheduledHour, hour)
-				s.scheduledHour = hour
+				zlog.Info().Str("Automation", automationName).Msgf("[automations:scheduleAtHour] Schedule hour changed, rescheduling %s -> %s", s.scheduledTime.Format("15:04:05"), hour.Format("15:04:05"))
+				s.scheduledTime = hour
 
 				// Cancelling the previous job
-				err = _cronScheduler.RemoveByID(s.cronJob)
+				err = _cronScheduler.RemoveJob(s.cronJob.ID())
 				if err != nil {
 					zlog.Error().Err(err).Msg("[automations:scheduleAtHour:start] Failed to remove cron job")
 					return
 				}
 
 				// Re-Scheduling the job
-				cronJob, err := _cronScheduler.Every(1).Day().At(s.scheduledHour).Tag("atHour").Do(func() {
-					zlog.Info().Str("Automation", automationName).Msg("[automations:scheduleAtHour] Running scheduled job")
-					err := action.run()
-					if err != nil {
-						zlog.Error().Err(err).Str("Automation", automationName).Msg("[automations:scheduleAtHour:start] Failed to run scheduled job")
-					}
-				})
+				cronJob, err := s.scheduleTask(automationName, action)
 				if err != nil {
 					zlog.Error().Err(err).Msg("[automations:scheduleAtHour:start] Failed to schedule new cron job")
 					return
@@ -176,43 +153,59 @@ func (s *scheduleAtHour) start(action ActionRunner) error {
 	return nil
 }
 
+func (s *scheduleAtHour) scheduleTask(automationName string, action ActionRunner) (gocron.Job, error) {
+	return _cronScheduler.NewJob(
+		gocron.DailyJob(1,
+			gocron.NewAtTimes(
+				gocron.NewAtTime(uint(s.scheduledTime.Hour()), uint(s.scheduledTime.Minute()), uint(s.scheduledTime.Second())),
+			),
+		),
+		gocron.NewTask(
+			func() {
+				zlog.Info().Str("Automation", automationName).Msg("[automations:scheduleAtHour] Running scheduled job")
+				err := action.run()
+				if err != nil {
+					zlog.Error().Err(err).Str("Automation", automationName).Msg("[automations:scheduleAtHour:start] Failed to run scheduled job")
+				}
+			},
+		),
+		gocron.WithTags("core", "automation", "atHour"),
+	)
+}
 func (s *scheduleAtHour) job() error {
-	if s.fixedHour != "" {
-		s.scheduledHour = s.fixedHour
-	} else {
-		timeThingValue, err := s.timeThing.Property(s.propertyHour).Value()
+	if s.timeThingProperty != "" {
+		timeThingValue, err := s.timeThing.Property(s.timeThingProperty).Value()
 		if err != nil {
 			return errors.New("time thing property not available: " + err.Error())
 		}
-		hour, err := getPropertyHour(timeThingValue.(string), s.min, s.max)
+		t, err := getPropertyHour(timeThingValue.(string), s.min, s.max)
 		if err != nil {
 			return err
 		}
-		s.scheduledHour = hour
-	}
+		s.scheduledTime = t
+	} // else: Fixed hour, time already set
 	return nil
 }
 
-func getPropertyHour(timeThingValue string, min string, max string) (string, error) {
+func getPropertyHour(timeThingValue string, min *time.Time, max *time.Time) (*time.Time, error) {
 	// Convert the thing date to a time, without the date/location, for comparison
 	timeValue, err := DateToHour(timeThingValue)
 	// TODO the format can be customised?
 	if err != nil {
-		return "", errors.New("invalid time thing value: " + err.Error())
+		return nil, errors.New("invalid time thing value: " + err.Error())
 	}
-	hour := timeValue.Format("15:04")
 
-	if yes, _ := HourIsBefore(hour, min); yes {
+	if min != nil && timeValue.Before(*min) {
 		return min, nil
 	}
-	if yes, _ := HourIsAfter(hour, max); yes {
+	if max != nil && timeValue.Before(*max) {
 		return max, nil
 	}
-	return hour, nil
+	return &timeValue, nil
 }
 
 func (s *scheduleAtHour) cancel() {
-	err := _cronScheduler.RemoveByID(s.cronJob)
+	err := _cronScheduler.RemoveJob(s.cronJob.ID())
 	if err != nil {
 		zlog.Error().Err(err).Msg("[automations:scheduleAtHour:cancel] Failed to remove cron job")
 	}
@@ -221,13 +214,16 @@ func (s *scheduleAtHour) cancel() {
 }
 
 func (s *scheduleAtHour) equals(other Schedule) bool {
-	if other == nil {
+	if s == nil || other == nil {
 		return false
 	}
 	s2, ok := other.(*scheduleAtHour)
-	return ok && s.scheduledHour == s2.scheduledHour
+	if !ok || s2.scheduledTime == nil || s.scheduledTime == nil {
+		return false
+	}
+	return ok && s.scheduledTime.Equal(*s2.scheduledTime)
 }
 
 func (s *scheduleAtHour) string() string {
-	return fmt.Sprintf("every day at %s", s.scheduledHour)
+	return fmt.Sprintf("every day at %s", s.scheduledTime.Format("15:04:05"))
 }

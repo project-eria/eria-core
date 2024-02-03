@@ -12,7 +12,7 @@ type conditionTime struct {
 }
 
 /**
- * - `time|[before/after]=<hour in 15:00 format>`
+ * - `time|[before/after]=<hour in 15:04/15:04:05 format>`
  */
 func NewConditionTime(conditionArray []string) (*conditionTime, error) {
 	if len(conditionArray) == 2 { // Check if the condition has the correct number of parameters
@@ -35,17 +35,16 @@ func NewConditionTime(conditionArray []string) (*conditionTime, error) {
 	return nil, errors.New("invalid condition length")
 }
 
-// HourToTime need to be used on checking
-
+// HourToCurrentTime needs to be used on checking
 func (c *conditionTime) check(now time.Time) (bool, error) {
 	if c.after != "" {
-		t, err := HourToTime(c.after, now) // Convert the hour string to a time
+		t, err := HourToCurrentTime(c.after, now) // Convert the hour string to a time
 		if err != nil {
 			return false, err
 		}
 		return now.After(t), nil
 	} else if c.before != "" {
-		t, err := HourToTime(c.before, now) // Convert the hour string to a time
+		t, err := HourToCurrentTime(c.before, now) // Convert the hour string to a time
 		if err != nil {
 			return false, err
 		}

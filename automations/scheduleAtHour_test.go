@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/go-co-op/gocron"
+	"github.com/go-co-op/gocron/v2"
 	eriaconsumer "github.com/project-eria/eria-core/consumer"
 	"github.com/project-eria/eria-core/consumer/mocks"
 	"github.com/rs/zerolog"
@@ -57,8 +57,9 @@ func (ts *ScheduleAtHourTestSuite) Test_NewFixedHourIncorrect() {
 }
 
 func (ts *ScheduleAtHourTestSuite) Test_NewFixedHour() {
+	t, _ := time.Parse("15:04", "12:20")
 	s := &scheduleAtHour{
-		fixedHour: "12:20",
+		scheduledTime: &t,
 	}
 
 	got, err := NewScheduleAtHour([]string{"at", "hour", "12:20"})
@@ -67,8 +68,9 @@ func (ts *ScheduleAtHourTestSuite) Test_NewFixedHour() {
 }
 
 func (ts *ScheduleAtHourTestSuite) Test_NewFixedHourWithSeconds() {
+	t, _ := time.Parse("15:04:05", "12:20:40")
 	s := &scheduleAtHour{
-		fixedHour: "12:20:40",
+		scheduledTime: &t,
 	}
 
 	got, err := NewScheduleAtHour([]string{"at", "hour", "12:20:40"})
@@ -77,8 +79,9 @@ func (ts *ScheduleAtHourTestSuite) Test_NewFixedHourWithSeconds() {
 }
 
 func (ts *ScheduleAtHourTestSuite) Test_NewFixedHourWithExtraParams() {
+	t, _ := time.Parse("15:04", "12:20")
 	s := &scheduleAtHour{
-		fixedHour: "12:20",
+		scheduledTime: &t,
 	}
 
 	got, err := NewScheduleAtHour([]string{"at", "hour", "12:20", "x"})
@@ -100,8 +103,8 @@ func (ts *ScheduleAtHourTestSuite) Test_NewThingNotExistingProperty() {
 
 func (ts *ScheduleAtHourTestSuite) Test_NewThingExistingProperty() {
 	s := &scheduleAtHour{
-		timeThing:    ts.astralThing,
-		propertyHour: "timeProperty",
+		timeThing:         ts.astralThing,
+		timeThingProperty: "timeProperty",
 	}
 	//	_consumedThings = ts.consumedThings
 	got, err := NewScheduleAtHour([]string{"at", "hour", "astral:timeProperty"})
@@ -110,10 +113,11 @@ func (ts *ScheduleAtHourTestSuite) Test_NewThingExistingProperty() {
 }
 
 func (ts *ScheduleAtHourTestSuite) Test_NewThingExistingPropertyWithMin() {
+	min, _ := time.Parse("15:04", "14:20")
 	s := &scheduleAtHour{
-		timeThing:    ts.astralThing,
-		propertyHour: "timeProperty",
-		min:          "14:20",
+		timeThing:         ts.astralThing,
+		timeThingProperty: "timeProperty",
+		min:               &min,
 	}
 	got, err := NewScheduleAtHour([]string{"at", "hour", "astral:timeProperty", "min=14:20"})
 	ts.Nil(err)
@@ -121,10 +125,11 @@ func (ts *ScheduleAtHourTestSuite) Test_NewThingExistingPropertyWithMin() {
 }
 
 func (ts *ScheduleAtHourTestSuite) Test_NewThingExistingPropertyWithMax() {
+	max, _ := time.Parse("15:04", "14:40")
 	s := &scheduleAtHour{
-		timeThing:    ts.astralThing,
-		propertyHour: "timeProperty",
-		max:          "14:40",
+		timeThing:         ts.astralThing,
+		timeThingProperty: "timeProperty",
+		max:               &max,
 	}
 	got, err := NewScheduleAtHour([]string{"at", "hour", "astral:timeProperty", "max=14:40"})
 	ts.Nil(err)
@@ -132,11 +137,13 @@ func (ts *ScheduleAtHourTestSuite) Test_NewThingExistingPropertyWithMax() {
 }
 
 func (ts *ScheduleAtHourTestSuite) Test_NewThingExistingPropertyWithMinMax() {
+	min, _ := time.Parse("15:04", "14:20")
+	max, _ := time.Parse("15:04", "14:40")
 	s := &scheduleAtHour{
-		timeThing:    ts.astralThing,
-		propertyHour: "timeProperty",
-		min:          "14:20",
-		max:          "14:40",
+		timeThing:         ts.astralThing,
+		timeThingProperty: "timeProperty",
+		min:               &min,
+		max:               &max,
 	}
 	got, err := NewScheduleAtHour([]string{"at", "hour", "astral:timeProperty", "min=14:20", "max=14:40"})
 	ts.Nil(err)
@@ -144,43 +151,48 @@ func (ts *ScheduleAtHourTestSuite) Test_NewThingExistingPropertyWithMinMax() {
 }
 
 func (ts *ScheduleAtHourTestSuite) Test_Equal() {
+	t1, _ := time.Parse("15:04", "12:20")
+	t2, _ := time.Parse("15:04", "12:20")
 	s1 := &scheduleAtHour{
-		scheduledHour: "12:20",
+		scheduledTime: &t1,
 	}
 	s2 := &scheduleAtHour{
-		scheduledHour: "12:20",
+		scheduledTime: &t2,
 	}
 	isEqual := s1.equals(s2)
 	ts.True(isEqual)
 }
 
 func (ts *ScheduleAtHourTestSuite) Test_EqualExtraAttributes() {
+	t1, _ := time.Parse("15:04", "12:20")
+	t2, _ := time.Parse("15:04", "12:20")
 	s1 := &scheduleAtHour{
-		fixedHour:     "13:00", // This should not append, but that just for test case
-		scheduledHour: "12:20",
+		scheduledTime: &t1,
 	}
 	s2 := &scheduleAtHour{
-		fixedHour:     "11:00", // This should not append, but that just for test case
-		scheduledHour: "12:20",
+		scheduledTime: &t2,
 	}
 	isEqual := s1.equals(s2)
 	ts.True(isEqual)
 }
 
 func (ts *ScheduleAtHourTestSuite) Test_NotEqualHour() {
+	t1, _ := time.Parse("15:04", "12:20")
+	t2, _ := time.Parse("15:04", "12:10")
 	s1 := &scheduleAtHour{
-		scheduledHour: "12:20",
+		scheduledTime: &t1,
 	}
 	s2 := &scheduleAtHour{
-		scheduledHour: "12:10",
+		scheduledTime: &t2,
 	}
 	isEqual := s1.equals(s2)
 	ts.False(isEqual)
 }
 
 func (ts *ScheduleAtHourTestSuite) Test_NotEqualType() {
+	t1, _ := time.Parse("15:04", "12:20")
 	s1 := &scheduleAtHour{
-		scheduledHour: "12:20",
+		scheduledTime: &t1,
 	}
 	s2 := &scheduleImmediate{}
 	isEqual := s1.equals(s2)
@@ -188,37 +200,41 @@ func (ts *ScheduleAtHourTestSuite) Test_NotEqualType() {
 }
 
 func (ts *ScheduleAtHourTestSuite) Test_NotEqualNil() {
+	t1, _ := time.Parse("15:04", "12:20")
 	s1 := &scheduleAtHour{
-		scheduledHour: "12:20",
+		scheduledTime: &t1,
 	}
 	isEqual := s1.equals(nil)
 	ts.False(isEqual)
 }
 
 func (ts *ScheduleAtHourTestSuite) Test_Job() {
+	t, _ := time.Parse("15:04", "12:20")
 	s := &scheduleAtHour{
-		fixedHour: "12:20",
+		scheduledTime: &t,
 	}
 	err := s.job()
 	ts.Nil(err)
 	ts.Equal(&scheduleAtHour{
-		fixedHour:     "12:20",
-		scheduledHour: "12:20",
+		scheduledTime: &t,
 	}, s)
 }
 
 func (ts *ScheduleAtHourTestSuite) Test_Start() {
 	action := &MockedAction{}
-	_cronScheduler = gocron.NewScheduler(time.UTC)
+	_cronScheduler, _ = gocron.NewScheduler()
+	_cronScheduler.Start()
+	t, _ := time.Parse("15:04", "12:20")
 	s := &scheduleAtHour{
-		scheduledHour: "12:20",
+		scheduledTime: &t,
 	}
 	err := s.start(action)
 	ts.Nil(err)
 	ts.NotNil(s.cronJob)
-	ts.Equal("12:20", s.scheduledHour)
-	ts.Equal("12:20", s.cronJob.ScheduledAtTime())
-	ts.Equal(_cronScheduler.Len(), 1)
+	ts.Equal("12:20", s.scheduledTime.Format("15:04"))
+	j, _ := s.cronJob.NextRun()
+	ts.Equal("12:20", j.Format("15:04"))
+	ts.Equal(len(_cronScheduler.Jobs()), 1)
 	action.AssertNotCalled(ts.T(), "run")
 }
 
@@ -231,8 +247,9 @@ func (ts *ScheduleAtHourTestSuite) Test_StartMissingScheduled() {
 }
 
 func (ts *ScheduleAtHourTestSuite) Test_StartMissingAction() {
+	t, _ := time.Parse("15:04", "12:20")
 	s := &scheduleAtHour{
-		scheduledHour: "12:20",
+		scheduledTime: &t,
 	}
 	err := s.start(nil)
 	ts.EqualError(err, "missing action")
@@ -241,35 +258,41 @@ func (ts *ScheduleAtHourTestSuite) Test_StartMissingAction() {
 
 func (ts *ScheduleAtHourTestSuite) Test_Cancel() {
 	action := &MockedAction{}
-	_cronScheduler = gocron.NewScheduler(time.UTC)
+	_cronScheduler, _ = gocron.NewScheduler()
+	_cronScheduler.Start()
+	t, _ := time.Parse("15:04", "12:20")
 	s := &scheduleAtHour{
-		scheduledHour: "12:20",
+		scheduledTime: &t,
 	}
 	err := s.start(action)
 	ts.Nil(err)
 	ts.NotNil(s.cronJob)
-	ts.Equal("12:20", s.scheduledHour)
-	ts.Equal("12:20", s.cronJob.ScheduledAtTime())
-	ts.Equal(_cronScheduler.Len(), 1)
+	ts.Equal("12:20", s.scheduledTime.Format("15:04"))
+	j, _ := s.cronJob.NextRun()
+	ts.Equal("12:20", j.Format("15:04"))
+	ts.Equal(len(_cronScheduler.Jobs()), 1)
 	s.cancel()
-	ts.Equal(_cronScheduler.Len(), 0)
+	ts.Equal(len(_cronScheduler.Jobs()), 0)
 	action.AssertNotCalled(ts.T(), "run")
 }
 
 func (ts *ScheduleAtHourTestSuite) Test_StartWithPropertyHour() {
 	action := &MockedAction{}
-	_cronScheduler = gocron.NewScheduler(time.UTC)
+	_cronScheduler, _ = gocron.NewScheduler()
+	_cronScheduler.Start()
+	t, _ := time.Parse("15:04", "12:20")
 	s := &scheduleAtHour{
-		scheduledHour: "12:20",
-		timeThing:     ts.astralThing,
-		propertyHour:  "timeProperty",
+		scheduledTime:     &t,
+		timeThing:         ts.astralThing,
+		timeThingProperty: "timeProperty",
 	}
 	err := s.start(action)
 	ts.Nil(err)
 	ts.NotNil(s.cronJob)
-	ts.Equal("12:20", s.scheduledHour)
-	ts.Equal("12:20", s.cronJob.ScheduledAtTime())
-	ts.Equal(_cronScheduler.Len(), 1)
+	ts.Equal("12:20", s.scheduledTime.Format("15:04"))
+	j, _ := s.cronJob.NextRun()
+	ts.Equal("12:20", j.Format("15:04"))
+	ts.Equal(len(_cronScheduler.Jobs()), 1)
 	ts.timeProperty.AssertCalled(ts.T(), "Observe", mock.Anything)
 	ts.NotNil(ts.observer)
 	action.AssertNotCalled(ts.T(), "run")
@@ -277,22 +300,26 @@ func (ts *ScheduleAtHourTestSuite) Test_StartWithPropertyHour() {
 
 func (ts *ScheduleAtHourTestSuite) Test_StartWithPropertyHourChange() {
 	action := &MockedAction{}
-	_cronScheduler = gocron.NewScheduler(time.UTC)
+	_cronScheduler, _ = gocron.NewScheduler()
+	t, _ := time.Parse("15:04", "12:20")
 	s := &scheduleAtHour{
-		scheduledHour: "12:20",
-		timeThing:     ts.astralThing,
-		propertyHour:  "timeProperty",
+		scheduledTime:     &t,
+		timeThing:         ts.astralThing,
+		timeThingProperty: "timeProperty",
 	}
+	_cronScheduler.Start()
 	err := s.start(action)
 	ts.Nil(err)
 	var old = s.cronJob
-	ts.Equal("12:20", s.scheduledHour)
-	ts.Equal("12:20", s.cronJob.ScheduledAtTime())
+	ts.Equal("12:20", s.scheduledTime.Format("15:04"))
+	j, _ := s.cronJob.NextRun()
+	ts.Equal("12:20", j.Format("15:04"))
 	ts.observer("2000-01-01T15:00:00+01:00", nil)
-	ts.Equal("15:00", s.scheduledHour)
-	ts.Equal("15:00", s.cronJob.ScheduledAtTime())
+	ts.Equal("15:00", s.scheduledTime.Format("15:04"))
+	j, _ = s.cronJob.NextRun()
+	ts.Equal("15:00", j.Format("15:04"))
 	ts.NotEqual(old, s.cronJob)
-	ts.Equal(_cronScheduler.Len(), 1)
+	ts.Equal(len(_cronScheduler.Jobs()), 1)
 	ts.timeProperty.AssertCalled(ts.T(), "Observe", mock.Anything)
 	ts.NotNil(ts.observer)
 	action.AssertNotCalled(ts.T(), "run")

@@ -7,7 +7,7 @@ No condition means it is executed by default.
 
 - `context|<context name>`
 	- not: `context|!<context name>`
-- `time|[before|after]=<hour in 15:00 format>`
+- `time|[before|after]=<hour in 15:04/15:04:05 format>`
 	?? Comment differencier "executer seulement si after..x" et "exectuer dès que after...x" ??
 
 - `property|<param[==<>!=]value>` (opérateur de comparaison,  e.g. a==1)
@@ -19,10 +19,10 @@ No condition means it is executed by default.
 - `immediate`: Immediate run
 - `none`: Disable the scheduling
 - `at|<time>`
-	- fixed hour: `at|<hour in 15:00 format>`
+	- fixed hour: `at|<hour in 15:04/15:04:05 format>`
 	- thing hour property: `at|<thing device>=<thing property>`
-		- min option: `at|<thing device>=<thing property>|min=<hour in 15:00 format>`
-		- max option: `at|<thing device>=<thing property>|max=<hour in 15:00 format>`
+		- min option: `at|<thing device>=<thing property>|min=<hour in 15:04/15:04:05 format>`
+		- max option: `at|<thing device>=<thing property>|max=<hour in 15:04/15:04:05 format>`
 
 - `every|<delay (10m, 1h, ...)>`, ??l'action est planifiée dans un cron, et une re-evaluation à chaque boucle
 ?Monday at 1pm?
