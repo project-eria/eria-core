@@ -18,8 +18,12 @@ func Test_GetConditionsTestSuite(t *testing.T) {
 
 func (ts *GetConditionsTestSuite) SetupTest() {
 	zerolog.SetGlobalLevel(zerolog.Disabled)
-	newContextCondition = func(_ []string) (*conditionContext, error) {
-		return &conditionContext{context: "test"}, nil
+	newContextCondition = func(_ []string) (*conditionContexts, error) {
+		return &conditionContexts{
+			{
+				context: "test",
+			},
+		}, nil
 	}
 	newTimeCondition = func(_ []string) (*conditionTime, error) {
 		return &conditionTime{}, nil
@@ -43,11 +47,15 @@ func (ts *GetConditionsTestSuite) Test_SimpleContextCondition() {
 	ts.Nil(err)
 	ts.Equal([]string{"test"}, obs.contexts)
 	ts.Len(got, 1)
-	ts.Equal(&conditionContext{context: "test"}, got[0])
+	ts.Equal(&conditionContexts{
+		{
+			context: "test",
+		},
+	}, got[0])
 }
 
 func (ts *GetConditionsTestSuite) Test_ContextConditionWithoutContextThing() {
-	newContextCondition = func(_ []string) (*conditionContext, error) {
+	newContextCondition = func(_ []string) (*conditionContexts, error) {
 		return nil, errors.New("contexts thing not configured")
 	}
 	got, obs, err := getConditions([]string{"context|test"})
@@ -69,6 +77,11 @@ func (ts *GetConditionsTestSuite) Test_DualCondition() {
 	ts.Nil(err)
 	ts.Equal([]string{"test"}, obs.contexts)
 	ts.Len(got, 2)
-	ts.Equal(&conditionContext{context: "test"}, got[0])
+	ts.Equal(&conditionContexts{
+		{
+			context: "test",
+			invert:  false,
+		},
+	}, got[0])
 	ts.Equal(&conditionTime{}, got[1])
 }

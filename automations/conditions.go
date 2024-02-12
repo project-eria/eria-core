@@ -5,6 +5,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/gookit/goutil/arrutil"
 	zlog "github.com/rs/zerolog/log"
 )
 
@@ -38,8 +39,10 @@ func getConditions(conditions []string) ([]Condition, *Observables, error) {
 		case "context":
 			c, err = newContextCondition(conditionArray)
 			// Add the context to the observables list
-			if c.(*conditionContext) != nil {
-				observables.contexts = append(observables.contexts, c.(*conditionContext).context)
+			if c.(*conditionContexts) != nil {
+				// Add the context to the observables list, and remove duplicates
+				observables.contexts = arrutil.Union(observables.contexts, c.(*conditionContexts).list(), arrutil.ValueEqualsComparer)
+
 			}
 		case "time":
 			c, err = newTimeCondition(conditionArray)

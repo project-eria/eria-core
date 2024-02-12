@@ -122,8 +122,10 @@ func (ts *GetJobTestSuite) Test_NoMatchingMultipleConditions() {
 					&conditionTime{
 						before: "13:00",
 					},
-					&conditionContext{
-						context: "away",
+					&conditionContexts{
+						{
+							context: "away",
+						},
 					},
 				},
 				schedule: &scheduleImmediate{},
@@ -144,9 +146,11 @@ func (ts *GetJobTestSuite) Test_MatchingMultipleConditions() {
 					&conditionTime{
 						before: "13:00",
 					},
-					&conditionContext{
-						context: "away",
-						invert:  true,
+					&conditionContexts{
+						{
+							context: "away",
+							invert:  true,
+						},
 					},
 				},
 				schedule: &scheduleImmediate{},
@@ -165,18 +169,22 @@ func (ts *GetJobTestSuite) Test_NoMatchingMultipleGroups() {
 		groups: []group{
 			{
 				conditions: []Condition{
-					&conditionContext{
-						context: "away",
-						invert:  false,
+					&conditionContexts{
+						{
+							context: "away",
+							invert:  false,
+						},
 					},
 				},
 				schedule: &scheduleImmediate{},
 			},
 			{
 				conditions: []Condition{
-					&conditionContext{
-						context: "holiday",
-						invert:  true,
+					&conditionContexts{
+						{
+							context: "holiday",
+							invert:  true,
+						},
 					},
 				},
 				schedule: &scheduleImmediate{},
@@ -195,18 +203,22 @@ func (ts *GetJobTestSuite) Test_MatchingMultipleGroups1() {
 		groups: []group{
 			{
 				conditions: []Condition{
-					&conditionContext{
-						context: "away",
-						invert:  true,
+					&conditionContexts{
+						{
+							context: "away",
+							invert:  true,
+						},
 					},
 				},
 				schedule: &scheduleImmediate{},
 			},
 			{
 				conditions: []Condition{
-					&conditionContext{
-						context: "holiday",
-						invert:  true,
+					&conditionContexts{
+						{
+							context: "holiday",
+							invert:  true,
+						},
 					},
 				},
 				schedule: &scheduleImmediate{},
@@ -224,18 +236,22 @@ func (ts *GetJobTestSuite) Test_MatchingMultipleGroups2() {
 		groups: []group{
 			{
 				conditions: []Condition{
-					&conditionContext{
-						context: "away",
-						invert:  false,
+					&conditionContexts{
+						{
+							context: "away",
+							invert:  false,
+						},
 					},
 				},
 				schedule: &scheduleImmediate{},
 			},
 			{
 				conditions: []Condition{
-					&conditionContext{
-						context: "holiday",
-						invert:  false,
+					&conditionContexts{
+						{
+							context: "holiday",
+							invert:  false,
+						},
 					},
 				},
 				schedule: &scheduleImmediate{},
