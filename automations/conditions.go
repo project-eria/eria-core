@@ -41,7 +41,7 @@ func getConditions(conditions []string) ([]Condition, *Observables, error) {
 			// Add the context to the observables list
 			if c.(*conditionContexts) != nil {
 				// Add the context to the observables list, and remove duplicates
-				observables.contexts = arrutil.Union(observables.contexts, c.(*conditionContexts).list(), arrutil.ValueEqualsComparer)
+				observables.contexts = arrutil.Union(observables.contexts, c.(*conditionContexts).list(), arrutil.StringEqualsComparer)
 
 			}
 		case "time":
