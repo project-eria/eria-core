@@ -198,7 +198,7 @@ func getPropertyHour(timeThingValue string, min *time.Time, max *time.Time) (*ti
 	if min != nil && timeValue.Before(*min) {
 		return min, nil
 	}
-	if max != nil && timeValue.Before(*max) {
+	if max != nil && timeValue.After(*max) {
 		return max, nil
 	}
 	return &timeValue, nil

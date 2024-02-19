@@ -324,3 +324,49 @@ func (ts *ScheduleAtHourTestSuite) Test_StartWithPropertyHourChange() {
 	ts.NotNil(ts.observer)
 	action.AssertNotCalled(ts.T(), "run")
 }
+
+func (ts *ScheduleAtHourTestSuite) Test_GetPropertyHourNoMinMax() {
+	t, err := getPropertyHour("2000-01-01T15:00:00+01:00", nil, nil)
+
+	ts.Nil(err)
+	ts.Equal("15:00", t.Format("15:04"))
+}
+
+func (ts *ScheduleAtHourTestSuite) Test_GetPropertyHourNotMatchingMin() {
+	min, _ := time.Parse("15:04", "14:00")
+	t, err := getPropertyHour("2000-01-01T15:00:00+01:00", &min, nil)
+
+	ts.Nil(err)
+	ts.Equal("15:00", t.Format("15:04"))
+}
+
+func (ts *ScheduleAtHourTestSuite) Test_GetPropertyHourNotMatchingMax() {
+	max, _ := time.Parse("15:04", "16:00")
+	t, err := getPropertyHour("2000-01-01T15:00:00+01:00", nil, &max)
+
+	ts.Nil(err)
+	ts.Equal("15:00", t.Format("15:04"))
+}
+
+func (ts *ScheduleAtHourTestSuite) Test_GetPropertyHourBeforeMin() {
+	min, _ := time.Parse("15:04", "14:00")
+	t, err := getPropertyHour("2000-01-01T12:00:00+01:00", &min, nil)
+
+	ts.Nil(err)
+	ts.Equal("14:00", t.Format("15:04"))
+}
+
+func (ts *ScheduleAtHourTestSuite) Test_GetPropertyHourAfterMax() {
+	max, _ := time.Parse("15:04", "16:00")
+	t, err := getPropertyHour("2000-01-01T18:00:00+01:00", nil, &max)
+
+	ts.Nil(err)
+	ts.Equal("16:00", t.Format("15:04"))
+}
+
+func (ts *ScheduleAtHourTestSuite) Test_GetPropertyIncorrectValue() {
+	t, err := getPropertyHour("15:00", nil, nil)
+
+	ts.Nil(t)
+	ts.EqualError(err, "invalid time thing value: parsing time \"15:00\" as \"2006-01-02T15:04:05Z07:00\": cannot parse \"15:00\" as \"2006\"")
+}
