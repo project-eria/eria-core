@@ -16,31 +16,49 @@ import (
 var (
 	// Version is a placeholder that will receive the git tag version during build time
 	// go build -v -ldflags "-X github.com/project-eria/eria-core.AppVersion=vx.x.x
-	AppVersion  = "-"
-	BuildDate   = "-"
-	CoreVersion = "-"
-	_logLevel   = zerolog.InfoLevel
-	_configPath *string
-	_logPath    *string
-	_logFormat  *string
-	_logOutput  *os.File
-	_logNoColor = false
-	_appName    string
-	_location   *time.Location
+	AppVersion         = "-"
+	BuildDate          = "-"
+	CoreVersion        = "-"
+	_logLevel          = zerolog.InfoLevel
+	_defaultLogLevel   = "info"
+	_configPath        *string
+	_defaultConfigPath = "config.yml"
+	_logPath           *string
+	_logFormat         *string
+	_logOutput         *os.File
+	_logNoColor        = false
+	_appName           string
+	_location          *time.Location
 )
 
 // Init gets the app name and version and displays app version if requested
 func Init(appName string, config interface{}) {
 	_appName = appName
 	//	zerolog.TimeFieldFormat = zerolog.TimeFormatUnix
+
+	// Show version (-v)
 	showVersion := flag.Bool("v", false, "Display the version")
-	logLevelStr := flag.String("log", "info", "log level [error, warn, info, debug, trace]")
-	_configPath = flag.String("config-path", "config.yml", "config file path")
+
+	// Config Path
+	envConfigPath, ok := os.LookupEnv("ERIA_CONFIG_PATH")
+	if ok {
+		_defaultConfigPath = envConfigPath
+	}
+	_configPath = flag.String("config-path", _defaultConfigPath, "config file path")
+
+	// Log Level
+	envLogLevel, ok := os.LookupEnv("ERIA_LOG")
+	if ok {
+		_defaultLogLevel = envLogLevel
+	}
+	logLevelStr := flag.String("log", _defaultLogLevel, "log level [error, warn, info, debug, trace]")
+
 	_logPath = flag.String("log-path", "", "log file path")
 	_logFormat = flag.String("log-format", "pretty", "log output format [pretty, json]")
 	flag.Parse()
+
 	var err error
-	// Show version (-v)
+
 	if *showVersion {
 		fmt.Printf("%s (%s)\n", AppVersion, BuildDate)
 		os.Exit(0)
