@@ -12,6 +12,25 @@ import (
 	zlog "github.com/rs/zerolog/log"
 )
 
+// AddAppController expose, sur le producer de l'application, un Thing WoT
+// « EriaAppController » permettant de piloter l'application à distance.
+//
+// Le Thing est enregistré avec la référence "eria", il est donc servi sous le
+// préfixe d'URL « /eria ». Les endpoints suivants sont exposés (host:port =
+// ceux configurés via `host`/`port`) :
+//
+//	Thing Description
+//	  GET  /eria                 → Thing Description JSON du contrôleur
+//
+//	Propriété « logLevel » (niveau de log zerolog, observable)
+//	  GET  /eria/logLevel        → lit le niveau de log courant
+//	                               réponse: "error" | "warn" | "info" | "debug" | "trace"
+//	  PUT  /eria/logLevel        → change le niveau de log
+//	                               corps JSON: "error" | "warn" | "info" | "debug" | "trace"
+//	  WS   /eria/logLevel        → observe les changements du niveau de log
+//	                               (observeproperty / unobserveproperty)
+//
+// La propriété logLevel est déclarée sans sécurité (`nosec_sc`).
 func AddAppController(p *eriaproducer.EriaProducer, instance string) {
 	eriaAppControllerTd, err := thing.New("eria:app:controler:"+instance, CoreVersion, "EriaAppController", "Eria App Controller", nil)
 	if err != nil {
