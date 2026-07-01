@@ -18,12 +18,13 @@ import (
 type scheduleAtHour struct {
 	cronJob gocron.Job
 	//	fixedHour         *time.Time
-	timeThing         eriaconsumer.Thing
-	timeThingProperty string
-	min               *time.Time
-	max               *time.Time
-	scheduledTime     *time.Time
-	observerRef       uint16
+	timeThing            eriaconsumer.Thing
+	timeThingProperty    string
+	timeThingPropertyObj eriaconsumer.Property
+	min                  *time.Time
+	max                  *time.Time
+	scheduledTime        *time.Time
+	observerRef          uint16
 }
 
 /**
@@ -121,8 +122,12 @@ func (s *scheduleAtHour) start(action ActionRunner) error {
 	s.cronJob = cronJob
 
 	if s.timeThingProperty != "" {
-		// Observe the property, in case of the hour property changes
-		s.observerRef, _ = s.timeThing.Property(s.timeThingProperty).Observe(func(value interface{}, err error) {
+		// Observe the property, in case of the hour property changes.
+		// Keep the Property instance so cancel() can UnObserve on the *same*
+		// instance: EriaThing.Property() returns a fresh object each call, and
+		// the observerRef is only valid for the instance that registered it.
+		s.timeThingPropertyObj = s.timeThing.Property(s.timeThingProperty)
+		s.observerRef, _ = s.timeThingPropertyObj.Observe(func(value interface{}, err error) {
 			if err == nil {
 				hour, err := getPropertyHour(value.(string), s.min, s.max)
 				if err != nil {
@@ -213,10 +218,11 @@ func (s *scheduleAtHour) cancel() {
 	}
 	// Unsubscribe from the time thing property to avoid leaking observers when
 	// the schedule is re-planned (e.g. on a context change).
-	if s.timeThingProperty != "" && s.timeThing != nil {
-		if err := s.timeThing.Property(s.timeThingProperty).UnObserve(s.observerRef); err != nil {
+	if s.timeThingPropertyObj != nil {
+		if err := s.timeThingPropertyObj.UnObserve(s.observerRef); err != nil {
 			zlog.Error().Err(err).Msg("[automations:scheduleAtHour:cancel] Failed to unobserve time thing property")
 		}
+		s.timeThingPropertyObj = nil
 	}
 }
 

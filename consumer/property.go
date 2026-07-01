@@ -75,7 +75,7 @@ func (p *EriaProperty) Observe(listener PropertyObserver) (uint16, error) {
 }
 
 func (p *EriaProperty) UnObserve(ref uint16) error {
-	if p.observers[ref] == nil {
+	if int(ref) >= len(p.observers) || p.observers[ref] == nil {
 		return errors.New("invalid observer reference")
 	}
 	// TODO
