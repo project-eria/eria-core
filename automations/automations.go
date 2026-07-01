@@ -1,6 +1,7 @@
 package automations
 
 import (
+	"sync"
 	"time"
 
 	"github.com/go-co-op/gocron/v2"
@@ -76,6 +77,13 @@ var (
 	_activeContexts = []string{} // The currently active contexts
 	_consumer       eriaconsumer.Consumer
 	_cronScheduler  gocron.Scheduler
+
+	// _automations is the registry of every prepared automation, used by
+	// Scheduled() to introspect the live planning state. _mu guards it together
+	// with each automation's jobs slice, which is re-planned from event
+	// goroutines (context changes, hour re-scheduling).
+	_automations []*Automation
+	_mu          sync.Mutex
 )
 
 /**

@@ -18,6 +18,10 @@ func scheduleJobs(automations []AutomationConfig) {
 			continue
 		}
 		automation.scheduleJob(now)
+		// Register the automation in the global registry, for introspection.
+		_mu.Lock()
+		_automations = append(_automations, automation)
+		_mu.Unlock()
 		// Register the automation against the contexts it observes, so it can be
 		// re-planned when one of them changes.
 		for _, context := range observables.contexts {
@@ -106,23 +110,34 @@ func (automation *Automation) scheduleJob(now time.Time) {
 	zlog.Trace().Str("automation", automation.name).Msg("[automations:scheduleJob] scheduling jobs")
 	planned := automation.plan(now)
 
-	// Cancel the previous jobs before (re)scheduling.
-	for _, job := range automation.jobs {
+	// Snapshot the currently active jobs, then cancel them outside the lock
+	// (cancel() may do network I/O via unobserve).
+	_mu.Lock()
+	previous := automation.jobs
+	_mu.Unlock()
+	for _, job := range previous {
 		job.schedule.cancel()
 	}
-	automation.jobs = automation.jobs[:0]
 
-	automation.status = "success"
+	// Build the new job set (start() may do network I/O via observe).
+	status := "success"
+	newJobs := make([]scheduledAction, 0, len(planned))
 	for _, job := range planned {
 		if err := job.schedule.start(job.action); err != nil {
 			zlog.Error().Err(err).Str("automation", automation.name).Msg("[automations:scheduleJob]")
-			automation.status = err.Error()
+			status = err.Error()
 			continue
 		}
-		automation.jobs = append(automation.jobs, job)
+		newJobs = append(newJobs, job)
 		zlog.Info().Str("automation", automation.name).Msgf("[automations:scheduleJob] Job scheduled: %s", job.schedule.string())
 	}
+
+	// Install the new plan atomically for readers (Scheduled()).
+	_mu.Lock()
+	automation.jobs = newJobs
+	automation.status = status
 	automation.lastScheduled = now
+	_mu.Unlock()
 }
 
 // mergeContexts appends the contexts observed by o into observables, skipping

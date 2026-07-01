@@ -3,7 +3,9 @@ package eria
 import (
 	"errors"
 
+	"github.com/project-eria/eria-core/automations"
 	"github.com/project-eria/eria-core/model"
+	propertyModel "github.com/project-eria/eria-core/model/property"
 	eriaproducer "github.com/project-eria/eria-core/producer"
 	"github.com/project-eria/go-wot/producer"
 	"github.com/project-eria/go-wot/securityScheme"
@@ -30,7 +32,11 @@ import (
 //	  WS   /eria/logLevel        → observe les changements du niveau de log
 //	                               (observeproperty / unobserveproperty)
 //
-// La propriété logLevel est déclarée sans sécurité (`nosec_sc`).
+//	Propriété « automations » (lecture seule)
+//	  GET  /eria/automations     → liste JSON des automations planifiées
+//	                               [{automation, devices, action, value, schedule, nextRun}]
+//
+// Les propriétés sont déclarées sans sécurité (`nosec_sc`).
 func AddAppController(p *eriaproducer.EriaProducer, instance string) {
 	eriaAppControllerTd, err := thing.New("eria:app:controler:"+instance, CoreVersion, "EriaAppController", "Eria App Controller", nil)
 	if err != nil {
@@ -39,6 +45,11 @@ func AddAppController(p *eriaproducer.EriaProducer, instance string) {
 
 	if err := model.AddModel(eriaAppControllerTd, "EriaAppController", ""); err != nil {
 		zlog.Panic().Err(err).Msg("[core] Can't add controller thing model")
+	}
+
+	// Read-only property exposing the list of scheduled automations
+	if _, err := model.AddProperty(eriaAppControllerTd, "automations", propertyModel.Automations, nil); err != nil {
+		zlog.Panic().Err(err).Msg("[core] Can't add automations property")
 	}
 
 	// Add Security
@@ -52,6 +63,11 @@ func AddAppController(p *eriaproducer.EriaProducer, instance string) {
 
 	eriaAppControllerThing.SetPropertyReadHandler("logLevel", logLevelRead)
 	eriaAppControllerThing.SetPropertyWriteHandler("logLevel", logLevelWrite)
+	eriaAppControllerThing.SetPropertyReadHandler("automations", automationsRead)
+}
+
+func automationsRead(t producer.ExposedThing, name string, parameters map[string]interface{}) (interface{}, error) {
+	return automations.Scheduled(), nil
 }
 
 func logLevelRead(t producer.ExposedThing, name string, parameters map[string]interface{}) (interface{}, error) {

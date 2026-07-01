@@ -32,12 +32,13 @@ de log à chaud, sans redémarrage).
 Les URLs utilisent le `host`/`port` configurés (`port` par défaut : `80`, voir
 [config.go](config.go)).
 
-| Méthode | Chemin           | Opération WoT                     | Description                                   |
-| ------- | ---------------- | --------------------------------- | --------------------------------------------- |
-| `GET`   | `/eria`          | —                                 | Thing Description JSON du contrôleur          |
-| `GET`   | `/eria/logLevel` | `readproperty`                    | Lit le niveau de log courant                  |
-| `PUT`   | `/eria/logLevel` | `writeproperty`                   | Change le niveau de log                       |
-| `WS`    | `/eria/logLevel` | `observeproperty`/`unobserve…`    | Observe les changements du niveau de log      |
+| Méthode | Chemin              | Opération WoT                     | Description                                    |
+| ------- | ------------------- | --------------------------------- | ---------------------------------------------- |
+| `GET`   | `/eria`             | —                                 | Thing Description JSON du contrôleur           |
+| `GET`   | `/eria/logLevel`    | `readproperty`                    | Lit le niveau de log courant                   |
+| `PUT`   | `/eria/logLevel`    | `writeproperty`                   | Change le niveau de log                        |
+| `WS`    | `/eria/logLevel`    | `observeproperty`/`unobserve…`    | Observe les changements du niveau de log       |
+| `GET`   | `/eria/automations` | `readproperty`                    | Liste JSON des automations planifiées          |
 
 ### Propriété `logLevel`
 
@@ -73,6 +74,39 @@ Récupérer la Thing Description complète :
 
 ```bash
 curl http://localhost:80/eria
+```
+
+### Propriété `automations`
+
+Propriété en lecture seule renvoyant la liste des automations actuellement
+planifiées. La liste est vivante : elle change au gré des contextes actifs et
+du recalcul des horaires (schedules `at|hour|…`).
+
+Chaque entrée correspond à un groupe actif d'une automation :
+
+| Champ        | Type              | Description                                                        |
+| ------------ | ----------------- | ----------------------------------------------------------------- |
+| `automation` | string            | Nom de l'automation (config YAML)                                 |
+| `devices`    | []string          | Références des Things ciblés par l'action                         |
+| `action`     | string            | Clé de l'action invoquée (ex. `on`, `toggle`)                     |
+| `value`      | any (optionnel)   | Valeur de l'action, si présente                                   |
+| `schedule`   | string            | Description lisible du schedule (ex. `every day at 07:30:00`)     |
+| `nextRun`    | date-time (opt.)  | Prochaine exécution (horaires) ; absent pour `immediate`/désactivé |
+
+```bash
+curl http://localhost:80/eria/automations
+```
+
+```json
+[
+  {
+    "automation": "Volets salon",
+    "devices": ["shutter-salon"],
+    "action": "close",
+    "schedule": "every day at 21:30:00",
+    "nextRun": "2026-07-01T21:30:00+02:00"
+  }
+]
 ```
 
 ## Génération des endpoints
