@@ -205,12 +205,19 @@ func getPropertyHour(timeThingValue string, min *time.Time, max *time.Time) (*ti
 }
 
 func (s *scheduleAtHour) cancel() {
-	err := _cronScheduler.RemoveJob(s.cronJob.ID())
-	if err != nil {
-		zlog.Error().Err(err).Msg("[automations:scheduleAtHour:cancel] Failed to remove cron job")
+	if s.cronJob != nil {
+		if err := _cronScheduler.RemoveJob(s.cronJob.ID()); err != nil {
+			zlog.Error().Err(err).Msg("[automations:scheduleAtHour:cancel] Failed to remove cron job")
+		}
+		s.cronJob = nil
 	}
-	s.cronJob = nil
-	// TODO s.timeThing.Property(s.propertyHour).UnObserve(s.observerRef)
+	// Unsubscribe from the time thing property to avoid leaking observers when
+	// the schedule is re-planned (e.g. on a context change).
+	if s.timeThingProperty != "" && s.timeThing != nil {
+		if err := s.timeThing.Property(s.timeThingProperty).UnObserve(s.observerRef); err != nil {
+			zlog.Error().Err(err).Msg("[automations:scheduleAtHour:cancel] Failed to unobserve time thing property")
+		}
+	}
 }
 
 func (s *scheduleAtHour) equals(other Schedule) bool {

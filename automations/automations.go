@@ -10,29 +10,62 @@ import (
 	zlog "github.com/rs/zerolog/log"
 )
 
+// AutomationConfig is the YAML declaration of an automation. An automation owns
+// a set of things and one or more groups; each group declares an action and a
+// first-match list of schedule entries deciding when (or whether) that action
+// runs.
 type AutomationConfig struct {
-	Things []string `yaml:"things" required:"true"` // thing ref
-	Name   string   `yaml:"name" required:"true"`
-	Action string   `yaml:"action" required:"true"`
-	Groups []struct {
-		//	Name       string   `yaml:"name" required:"true"`
-		Schedule   string   `yaml:"schedule" required:"true"`
-		Conditions []string `yaml:"conditions"`
-	} `yaml:"groups" required:"true"`
+	Name   string        `yaml:"name" required:"true"`
+	Things []string      `yaml:"things" required:"true"`
+	Groups []groupConfig `yaml:"groups" required:"true"`
 }
 
-type group struct {
-	schedule   Schedule
+// groupConfig declares one action and the schedule branches that drive it. The
+// first branch whose conditions all match wins ("first schedule condition that
+// matches wins").
+type groupConfig struct {
+	Action    string                `yaml:"action" required:"true"`
+	Schedules []scheduleEntryConfig `yaml:"schedules" required:"true"`
+}
+
+// scheduleEntryConfig is one branch of a group's first-match selection:
+//   - conditions: all must match for this branch to be selected (empty = always,
+//     i.e. the default branch);
+//   - schedule: when the branch is selected, the action is scheduled accordingly.
+//     An empty schedule disables the group for that case ("no schedule means
+//     this automation is disabled").
+type scheduleEntryConfig struct {
+	Conditions []string `yaml:"conditions"`
+	Schedule   string   `yaml:"schedule"`
+}
+
+// --- runtime model ---
+
+// scheduleEntry is the prepared form of scheduleEntryConfig.
+type scheduleEntry struct {
 	conditions []Condition
+	schedule   Schedule // nil => disabled when this entry is the first match
+}
+
+// actionGroup is the prepared form of groupConfig: one action selected through
+// a first-match list of schedule entries.
+type actionGroup struct {
+	action  ActionRunner
+	entries []scheduleEntry
+}
+
+// scheduledAction binds a selected schedule to the action it runs.
+type scheduledAction struct {
+	schedule Schedule
+	action   ActionRunner
 }
 
 type Automation struct {
 	name          string
-	groups        []group
-	job           Schedule
+	groups        []actionGroup
+	jobs          []scheduledAction // the currently planned set (one per active group)
 	lastScheduled time.Time
 	status        string
-	action        ActionRunner
 }
 
 var (
