@@ -40,6 +40,17 @@ var Models = map[string]Model{
 			"stop":  {Meta: actionModel.Stop},
 		},
 	},
+	"GarageDoor": {
+		Properties: map[string]ModelProperty{
+			"open":   {DefaultValue: false, Meta: propertyModel.Open},
+			"moving": {DefaultValue: false, Meta: propertyModel.Moving},
+			"closed": {DefaultValue: false, Meta: propertyModel.Closed},
+		},
+		Actions: map[string]ModelAction{
+			"open":  {Meta: actionModel.Open},
+			"close": {Meta: actionModel.Close},
+		},
+	},
 	"ShutterPosition": {
 		Properties: map[string]ModelProperty{
 			"open":     {DefaultValue: false, Meta: propertyModel.Open},
