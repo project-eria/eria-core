@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/gookit/goutil/arrutil"
+	"github.com/project-eria/go-wot/producer"
 	zlog "github.com/rs/zerolog/log"
 )
 
@@ -64,7 +65,7 @@ func getAutomation(c AutomationConfig) (*Automation, *Observables, error) {
 	groups := make([]actionGroup, len(c.Groups))
 	for gi, groupConfig := range c.Groups {
 		// One action per group
-		action, err := getAction(c.Things, c.Name, groupConfig.Action)
+		action, err := getActionRunner(c.Things, c.Name, groupConfig.Action)
 		if err != nil {
 			zlog.Error().Err(err).Str("automation", c.Name).Str("action", groupConfig.Action).Msg("[automations:getAutomation] Can't get action")
 			return nil, nil, err // Skip this automation
@@ -73,7 +74,7 @@ func getAutomation(c AutomationConfig) (*Automation, *Observables, error) {
 		// First-match list of schedule branches
 		entries := make([]scheduleEntry, len(groupConfig.Schedules))
 		for ei, entryConfig := range groupConfig.Schedules {
-			conditions, o, err := getConditions(entryConfig.Conditions)
+			conditions, o, err := getConditions(entryConfig.Conditions, c.Things)
 			if err != nil {
 				zlog.Error().Err(err).Str("automation", c.Name).Int("group", gi).Int("entry", ei).Msg("[automations:getAutomation] Can't get conditions")
 				return nil, observables, err // Skip this automation

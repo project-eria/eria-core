@@ -12,6 +12,16 @@ type ActionRunner interface {
 	run() error
 }
 
+// getActionRunner dispatches on the action type: `webhook|<url>|...` calls an
+// HTTP URL, anything else is a WoT action on the automation's things.
+func getActionRunner(thingRefs []string, automationName string, actionStr string) (ActionRunner, error) {
+	actionStr = strings.TrimSpace(actionStr)
+	if strings.HasPrefix(actionStr, webhookPrefix) {
+		return getWebhookAction(automationName, actionStr)
+	}
+	return getAction(thingRefs, automationName, actionStr)
+}
+
 type Action struct {
 	AutomationName string
 	ExposedThings  map[string]producer.ExposedThing

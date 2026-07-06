@@ -18,7 +18,12 @@ No condition means it is executed by default.
 	- e.g. `property|triggered==true`, `property|temperature>25`
 
 ## Actions
-- `<action>|<param name>=<value>|<param name>=<value>`
+- `<action>|<param name>=<value>|<param name>=<value>` — action WoT sur les things de l'automation
+- `webhook|<url>|method=<GET|POST|PUT>|body=<content>` — appel d'une URL HTTP(S)
+	- `method` optionnel, défaut `POST`
+	- `body` optionnel, envoyé en `application/json` (ignoré en GET)
+	- timeout fixe de 10s ; un statut HTTP >= 400 est traité comme un échec
+	- e.g. `webhook|https://ha.local/api/webhook/mon-id|body={"event":"volets fermés"}`
 
 ## Scheduling
 - `immediate`: Immediate run
