@@ -10,8 +10,9 @@ import (
 )
 
 var (
-	newContextCondition = NewConditionContext
-	newTimeCondition    = NewConditionTime
+	newContextCondition  = NewConditionContext
+	newTimeCondition     = NewConditionTime
+	newPropertyCondition = NewConditionProperty
 ) // Mocking for inner functions
 
 type Condition interface {
@@ -19,12 +20,14 @@ type Condition interface {
 }
 
 type Observables struct {
-	contexts []string
+	contexts   []string
+	properties map[string][]string // properties to observe, by thing ref
 }
 
-func getConditions(conditions []string) ([]Condition, *Observables, error) {
+func getConditions(conditions []string, thingRefs []string) ([]Condition, *Observables, error) {
 	observables := &Observables{
-		contexts: []string{},
+		contexts:   []string{},
+		properties: map[string][]string{},
 	}
 	cs := make([]Condition, 0)
 	if conditions == nil {
@@ -46,8 +49,16 @@ func getConditions(conditions []string) ([]Condition, *Observables, error) {
 			}
 		case "time":
 			c, err = newTimeCondition(conditionArray)
-		// TODO case "property":
-		// 	c, err = NewConditionProperty(conditionArray)
+		case "property":
+			var pc *conditionProperty
+			pc, err = newPropertyCondition(conditionArray, thingRefs)
+			if pc != nil {
+				// Add the properties to the observables list, and remove duplicates
+				for thingRef, properties := range pc.list() {
+					observables.properties[thingRef] = arrutil.Union(observables.properties[thingRef], properties, arrutil.StringEqualsComparer)
+				}
+			}
+			c = pc
 		default:
 			return nil, nil, errors.New("invalid condition type")
 		}

@@ -10,7 +10,12 @@ No condition means it is executed by default.
 - `time|[before|after]=<hour in 15:04/15:04:05 format>`
 	?? Comment differencier "executer seulement si after..x" et "exectuer dès que after...x" ??
 
-- `property|<param[==<>!=]value>` (opérateur de comparaison,  e.g. a==1)
+- `property|<name><operator><value>` — compare une propriété des things de l'automation
+	- opérateurs : `==`, `!=`, `<`, `<=`, `>`, `>=`
+	- vrai si au moins un des things correspond (OR, comme `context|`)
+	- la propriété est observée : tout changement re-planifie l'automation
+	  (un `schedule: immediate` est donc re-exécuté dès que la condition devient vraie)
+	- e.g. `property|triggered==true`, `property|temperature>25`
 
 ## Actions
 - `<action>|<param name>=<value>|<param name>=<value>`

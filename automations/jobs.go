@@ -30,6 +30,25 @@ func scheduleJobs(automations []AutomationConfig) {
 			}
 			_contextsAutomations[context] = append(_contextsAutomations[context], automation)
 		}
+		// Watch the properties referenced by the automation's conditions, so it
+		// can be re-planned (and immediate schedules re-run) when one changes.
+		for thingRef, properties := range observables.properties {
+			if exposedThing, ok := _exposedThings[thingRef]; ok && exposedThing != nil {
+				go watchProperties(exposedThing, properties, automation)
+			}
+		}
+	}
+}
+
+// watchProperties re-plans the automation whenever one of the observed
+// properties of the thing changes.
+func watchProperties(exposedThing producer.ExposedThing, properties []string, automation *Automation) {
+	changes := exposedThing.GetPropertyChangeChannel()
+	for change := range changes {
+		if arrutil.StringsHas(properties, change.Name) {
+			zlog.Info().Str("automation", automation.name).Str("property", change.Name).Msg("[automations:watchProperties] Property changed, re-schedule")
+			automation.scheduleJob(time.Now().In(_location))
+		}
 	}
 }
 
@@ -38,7 +57,10 @@ func scheduleJobs(automations []AutomationConfig) {
 func getAutomation(c AutomationConfig) (*Automation, *Observables, error) {
 	zlog.Info().Str("automation", c.Name).Msg("[automations:getAutomation] Adding automation")
 
-	observables := &Observables{contexts: make([]string, 0)}
+	observables := &Observables{
+		contexts:   make([]string, 0),
+		properties: map[string][]string{},
+	}
 	groups := make([]actionGroup, len(c.Groups))
 	for gi, groupConfig := range c.Groups {
 		// One action per group

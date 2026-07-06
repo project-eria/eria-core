@@ -36,14 +36,14 @@ func (ts *GetConditionsTestSuite) TearDownTest() {
 }
 
 func (ts *GetConditionsTestSuite) Test_InvalidCondition() {
-	got, obs, err := getConditions([]string{"unknown"})
+	got, obs, err := getConditions([]string{"unknown"}, nil)
 	ts.Nil(got)
 	ts.Nil(obs)
 	ts.EqualError(err, "invalid condition type")
 }
 
 func (ts *GetConditionsTestSuite) Test_SimpleContextCondition() {
-	got, obs, err := getConditions([]string{"context|test"})
+	got, obs, err := getConditions([]string{"context|test"}, nil)
 	ts.Nil(err)
 	ts.Equal([]string{"test"}, obs.contexts)
 	ts.Len(got, 1)
@@ -58,14 +58,14 @@ func (ts *GetConditionsTestSuite) Test_ContextConditionWithoutContextThing() {
 	newContextCondition = func(_ []string) (*conditionContexts, error) {
 		return nil, errors.New("contexts thing not configured")
 	}
-	got, obs, err := getConditions([]string{"context|test"})
+	got, obs, err := getConditions([]string{"context|test"}, nil)
 	ts.EqualError(err, "contexts thing not configured")
 	ts.Nil(got)
 	ts.Nil(obs)
 }
 
 func (ts *GetConditionsTestSuite) Test_SimpleTimeCondition() {
-	got, obs, err := getConditions([]string{"time|test"})
+	got, obs, err := getConditions([]string{"time|test"}, nil)
 	ts.Nil(err)
 	ts.Equal([]string{}, obs.contexts)
 	ts.Len(got, 1)
@@ -73,7 +73,7 @@ func (ts *GetConditionsTestSuite) Test_SimpleTimeCondition() {
 }
 
 func (ts *GetConditionsTestSuite) Test_DualCondition() {
-	got, obs, err := getConditions([]string{"context|test", "time|test"})
+	got, obs, err := getConditions([]string{"context|test", "time|test"}, nil)
 	ts.Nil(err)
 	ts.Equal([]string{"test"}, obs.contexts)
 	ts.Len(got, 2)
