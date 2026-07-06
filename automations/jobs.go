@@ -79,7 +79,7 @@ func getAutomation(c AutomationConfig) (*Automation, *Observables, error) {
 				zlog.Error().Err(err).Str("automation", c.Name).Int("group", gi).Int("entry", ei).Msg("[automations:getAutomation] Can't get conditions")
 				return nil, observables, err // Skip this automation
 			}
-			mergeContexts(observables, o)
+			mergeObservables(observables, o)
 
 			var schedule Schedule
 			if entryConfig.Schedule != "" {
@@ -163,15 +163,22 @@ func (automation *Automation) scheduleJob(now time.Time) {
 	_mu.Unlock()
 }
 
-// mergeContexts appends the contexts observed by o into observables, skipping
-// duplicates.
-func mergeContexts(observables *Observables, o *Observables) {
+// mergeObservables appends the contexts and properties observed by o into
+// observables, skipping duplicates.
+func mergeObservables(observables *Observables, o *Observables) {
 	if o == nil {
 		return
 	}
 	for _, context := range o.contexts {
 		if !arrutil.StringsHas(observables.contexts, context) {
 			observables.contexts = append(observables.contexts, context)
+		}
+	}
+	for thingRef, properties := range o.properties {
+		for _, property := range properties {
+			if !arrutil.StringsHas(observables.properties[thingRef], property) {
+				observables.properties[thingRef] = append(observables.properties[thingRef], property)
+			}
 		}
 	}
 }

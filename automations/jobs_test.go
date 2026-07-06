@@ -173,3 +173,26 @@ func (ts *ScheduleJobTestSuite) Test_ReplanReplaces() {
 	ts.Len(a.jobs, 1)
 	ts.Equal("success", a.status)
 }
+
+// ---- mergeObservables() ----
+
+func Test_MergeObservables(t *testing.T) {
+	dst := &Observables{
+		contexts:   []string{"weekend"},
+		properties: map[string][]string{"sonnette": {"triggered"}},
+	}
+	mergeObservables(dst, nil) // nil source is a no-op
+	mergeObservables(dst, &Observables{
+		contexts: []string{"weekend", "away"},
+		properties: map[string][]string{
+			"sonnette": {"triggered", "volume"},
+			"portail":  {"open"},
+		},
+	})
+	if len(dst.contexts) != 2 {
+		t.Errorf("contexts not merged: %v", dst.contexts)
+	}
+	if len(dst.properties["sonnette"]) != 2 || len(dst.properties["portail"]) != 1 {
+		t.Errorf("properties not merged: %v", dst.properties)
+	}
+}
