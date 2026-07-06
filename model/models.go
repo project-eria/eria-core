@@ -40,6 +40,11 @@ var Models = map[string]Model{
 			"stop":  {Meta: actionModel.Stop},
 		},
 	},
+	"Trigger": {
+		Properties: map[string]ModelProperty{
+			"triggered": {DefaultValue: false, Meta: propertyModel.Triggered},
+		},
+	},
 	"GarageDoor": {
 		Properties: map[string]ModelProperty{
 			"open":   {DefaultValue: false, Meta: propertyModel.Open},
