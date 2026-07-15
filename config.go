@@ -13,6 +13,11 @@ var eriaConfig = struct {
 	ExposedAddr  string                         `yaml:"exposedAddr,omitempty"`
 	Automations  []automations.AutomationConfig `yaml:"automations,omitempty"`
 	ContextsRef  string                         `yaml:"contextsRef,omitempty"`
+	Mdns         struct {
+		Disabled         bool   `yaml:"disabled,omitempty"`
+		Scheme           string `yaml:"scheme,omitempty" default:"http"`
+		DiscoveryTimeout string `yaml:"discoveryTimeout,omitempty" default:"60s"`
+	} `yaml:"mdns,omitempty"`
 	RemoteThings []struct {
 		Url  string   `yaml:"url" required:"true"`
 		Tags []string `yaml:"tags,omitempty"`

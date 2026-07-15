@@ -6,9 +6,11 @@ import (
 	"sync"
 
 	"github.com/project-eria/go-wot/producer"
+	"github.com/project-eria/go-wot/protocolDnssd"
 	"github.com/project-eria/go-wot/protocolHttp"
 	"github.com/project-eria/go-wot/protocolWebSocket"
 	"github.com/project-eria/go-wot/thing"
+	zlog "github.com/rs/zerolog/log"
 )
 
 type EriaProducer struct {
@@ -18,6 +20,8 @@ type EriaProducer struct {
 	appName                     string
 	appVersion                  string
 	buildDate                   string
+	mdnsEnabled                 bool
+	mdnsScheme                  string
 	wait                        sync.WaitGroup
 	cancel                      context.CancelFunc
 	ctx                         context.Context
@@ -47,6 +51,13 @@ func New(host string, port uint, exposedAddr string, appName string, appVersion 
 	return eriaProducer
 }
 
+// SetMdns configures the DNS-SD announcement (`_wot._tcp`) of the exposed
+// Things. Must be called before StartServer.
+func (p *EriaProducer) SetMdns(enabled bool, scheme string) {
+	p.mdnsEnabled = enabled
+	p.mdnsScheme = scheme
+}
+
 func (p *EriaProducer) StartServer() {
 	addr := fmt.Sprintf("%s:%d", p.host, p.port)
 	httpServer := protocolHttp.NewServer(addr, p.exposedAddr, p.appName, fmt.Sprintf("%s %s (%s)", p.appName, p.appVersion, p.buildDate))
@@ -55,6 +66,24 @@ func (p *EriaProducer) StartServer() {
 	// in order to call the .Use(WS) middleware, before the .Get(HTTP)
 	p.AddServer(wsServer)
 	p.AddServer(httpServer)
+
+	if p.mdnsEnabled {
+		if p.exposedAddr != "" {
+			// The mDNS announcement points to the local primary IP, not the
+			// exposed (proxy) address: consumers behind the proxy should use
+			// the static URL config instead.
+			zlog.Warn().Str("exposedAddr", p.exposedAddr).Msg("[producer:StartServer] exposedAddr is set: the mDNS announcement will point to the local address, consider mdns.disabled: true")
+		}
+		advertiser, err := protocolDnssd.NewAdvertiser(protocolDnssd.Options{
+			Port:   int(p.port),
+			Scheme: p.mdnsScheme,
+		})
+		if err != nil {
+			zlog.Error().Err(err).Msg("[producer:StartServer] can't create the mDNS advertiser, announcement disabled")
+		} else {
+			p.AddServer(advertiser)
+		}
+	}
 
 	p.Expose()
 	p.Start()

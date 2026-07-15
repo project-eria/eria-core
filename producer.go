@@ -16,6 +16,7 @@ func Producer(instance string) *eriaproducer.EriaProducer {
 	if eriaProducer == nil {
 		zlog.Trace().Msg("[core:GetProducer] Creating producer")
 		eriaProducer = eriaproducer.New(eriaConfig.Host, eriaConfig.Port, eriaConfig.ExposedAddr, _appName, AppVersion, BuildDate)
+		eriaProducer.SetMdns(!eriaConfig.Mdns.Disabled, eriaConfig.Mdns.Scheme)
 		AddAppController(eriaProducer, instance)
 	}
 	return eriaProducer
