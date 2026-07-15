@@ -18,11 +18,25 @@ var eriaConfig = struct {
 		Scheme           string `yaml:"scheme,omitempty" default:"http"`
 		DiscoveryTimeout string `yaml:"discoveryTimeout,omitempty" default:"60s"`
 	} `yaml:"mdns,omitempty"`
-	RemoteThings []struct {
-		Url  string   `yaml:"url" required:"true"`
-		Tags []string `yaml:"tags,omitempty"`
-	} `yaml:"remoteThings,omitempty"`
+	RemoteThings []RemoteThingConfig `yaml:"remoteThings,omitempty"`
 }{}
+
+// RemoteThingConfig declares a remote Thing to consume, either by direct URL
+// of its Thing Description, or by DNS-SD identifier (discovered on
+// `_wot._tcp`). Exactly one of Url/Mdns must be set.
+type RemoteThingConfig struct {
+	Url  string   `yaml:"url,omitempty"`
+	Mdns string   `yaml:"mdns,omitempty"` // DNS-SD instance (TD id without "urn:") or mDNS host label
+	Tags []string `yaml:"tags,omitempty"`
+	// OnConnect: "required" (default) blocks the app start and is fatal if
+	// the Thing can't be found/connected; "background" lets the app start
+	// and connects whenever the Thing shows up.
+	OnConnect string `yaml:"onConnect,omitempty" default:"required"`
+	// OnLoss: "rediscover" (default) re-resolves (mDNS) or re-fetches (URL)
+	// the Thing when an interaction fails; "ignore" logs and stays
+	// disconnected; "fatal" stops the app.
+	OnLoss string `yaml:"onLoss,omitempty" default:"rediscover"`
+}
 
 // loadConfig Loads the config file into a struct
 func loadConfig(config interface{}) *configmanager.ConfigManager {

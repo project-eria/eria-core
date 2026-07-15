@@ -1,6 +1,8 @@
 package eriaconsumer
 
 import (
+	"sync"
+
 	"github.com/project-eria/go-wot/consumer"
 	"github.com/project-eria/go-wot/protocolHttp"
 	"github.com/project-eria/go-wot/protocolWebSocket"
@@ -12,7 +14,8 @@ type Consumer interface {
 }
 
 type EriaConsumer struct {
-	things map[string]Thing
+	thingsMu sync.RWMutex // things is written by the ConnectThing goroutines
+	things   map[string]Thing
 	*consumer.Consumer
 }
 
