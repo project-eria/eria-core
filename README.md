@@ -123,3 +123,60 @@ Description par les bindings de `go-wot`.
 Ajouter une propriété ou une action au modèle `EriaAppController`
 ([model/models.go](model/models.go)) crée donc automatiquement les endpoints
 correspondants.
+
+## Découverte mDNS/DNS-SD
+
+### Annonce
+
+Toutes les apps annoncent leurs Things exposés en `_wot._tcp` (mDNS/DNS-SD,
+conforme W3C WoT Discovery) dès `eria.Start()`. Configuration :
+
+```yaml
+mdns:
+  disabled: false        # opt-out de l'annonce
+  scheme: http           # http|https, annoncé dans le TXT (défaut http)
+  discoveryTimeout: 60s  # délai de découverte des remoteThings `mdns:` requis
+```
+
+> Si `exposedAddr` (reverse proxy) est configuré, l'annonce mDNS pointera
+> l'IP locale et non le proxy : mettre `mdns.disabled: true` dans ce cas.
+
+Vérification : `dns-sd -B _wot._tcp local.` (macOS) ou
+`avahi-browse -r _wot._tcp` (Linux).
+
+### Connexion par identifiant mDNS
+
+Une entrée `remoteThings` déclare **soit** `url:` **soit** `mdns:` :
+
+```yaml
+remoteThings:
+- mdns: eria-aabbcc      # identifiant DNS-SD, XOR avec url
+  tags: [ "temp" ]
+  onConnect: required    # défaut — voir ci-dessous
+  onLoss: rediscover     # défaut — voir ci-dessous
+- url: http://manager-contexts.lan
+  tags: [ "contexts" ]
+```
+
+L'identifiant `mdns` est comparé à l'**instance DNS-SD** (le TD id sans son
+préfixe `urn:`, ex. `eria:test:1`), puis en repli au **hostname mDNS** du
+device (label sans `.local.`, ex. `eria-aabbcc` pour un ESP32). L'URL du TD
+est reconstruite depuis l'annonce (TXT `td`/`scheme` + adresse + port), puis
+le pipeline de connexion habituel s'applique — le choix HTTP/WS par
+interaction reste dicté par les Forms du TD.
+
+Comportements par entrée (`url` comme `mdns`) :
+
+- `onConnect: required` (défaut) — le démarrage attend la connexion ;
+  introuvable après `mdns.discoveryTimeout` ⇒ Fatal.
+- `onConnect: background` — l'app démarre sans attendre ; la connexion
+  s'établit dès que le Thing apparaît (retry en tâche de fond).
+- `onLoss: rediscover` (défaut) — quand une interaction échoue, re-résolution
+  mDNS (l'IP a pu changer) puis reconnexion, en conservant le pointeur
+  `EriaThing` détenu par l'app.
+- `onLoss: ignore` — log Warn, reste déconnecté.
+- `onLoss: fatal` — arrêt de l'app.
+
+Limites actuelles : la perte est détectée passivement (erreur de
+read/write/invoke — pas de heartbeat) ; les observations WebSocket établies
+avant la perte continuent de viser l'ancienne adresse jusqu'au redémarrage.
