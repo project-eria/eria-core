@@ -13,6 +13,10 @@ import (
 	zlog "github.com/rs/zerolog/log"
 )
 
+// ControllerRef is the ref of the App Controller Thing: served under /eria,
+// never announced over mDNS
+const ControllerRef = "eria"
+
 type EriaProducer struct {
 	host                        string
 	port                        uint
@@ -77,6 +81,10 @@ func (p *EriaProducer) StartServer() {
 		advertiser, err := protocolDnssd.NewAdvertiser(protocolDnssd.Options{
 			Port:   int(p.port),
 			Scheme: p.mdnsScheme,
+			// The App Controller (ref "eria") is not announced, like on the
+			// ESP32: consumers reach it at /eria next to the app's own Thing
+			// (the Home Assistant integration probes it there)
+			Skip: func(ref string) bool { return ref == ControllerRef },
 		})
 		if err != nil {
 			zlog.Error().Err(err).Msg("[producer:StartServer] can't create the mDNS advertiser, announcement disabled")

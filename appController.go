@@ -59,7 +59,7 @@ func AddAppController(p *eriaproducer.EriaProducer, instance string) {
 	noSecurityScheme := securityScheme.NewNoSecurity()
 	eriaAppControllerTd.AddSecurity("nosec_sc", noSecurityScheme)
 
-	eriaAppControllerThing, err := p.AddThing("eria", eriaAppControllerTd)
+	eriaAppControllerThing, err := p.AddThing(eriaproducer.ControllerRef, eriaAppControllerTd)
 	if err != nil {
 		zlog.Panic().Err(err).Msg("[core] Can't add app controller")
 	}

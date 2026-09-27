@@ -19,7 +19,7 @@ de log à chaud, sans redémarrage).
 ### Identité du Thing
 
 - **ID (`urn`)** : `eria:app:controler:<binaire>@<machine>[:<instance>]` —
-  unique sur le réseau (c'est aussi le nom de l'instance mDNS) ; `<instance>`
+  unique sur le réseau ; `<instance>`
   est l'argument passé à `eria.Producer(instance)`, omis s'il est vide. Le
   préfixe `eria:app:controler:` est stable : l'intégration Home Assistant
   reconnaît les contrôleurs grâce à lui.
@@ -132,7 +132,9 @@ correspondants.
 ### Annonce
 
 Toutes les apps annoncent leurs Things exposés en `_wot._tcp` (mDNS/DNS-SD,
-conforme W3C WoT Discovery) dès `eria.Start()`. Configuration :
+conforme W3C WoT Discovery) dès `eria.Start()`, **sauf l'App Controller**
+(comme sur les ESP32) : on le trouve sous `/eria`, à côté du Thing de l'app.
+Configuration :
 
 ```yaml
 mdns:
