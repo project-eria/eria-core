@@ -2,6 +2,9 @@ package eria
 
 import (
 	"errors"
+	"os"
+	"path/filepath"
+	"strings"
 
 	"github.com/project-eria/eria-core/automations"
 	"github.com/project-eria/eria-core/model"
@@ -38,7 +41,7 @@ import (
 //
 // Les propriétés sont déclarées sans sécurité (`nosec_sc`).
 func AddAppController(p *eriaproducer.EriaProducer, instance string) {
-	eriaAppControllerTd, err := thing.New("eria:app:controler:"+instance, CoreVersion, "EriaAppController", "Eria App Controller", nil)
+	eriaAppControllerTd, err := thing.New(controllerID(instance), CoreVersion, "EriaAppController", "Eria App Controller", nil)
 	if err != nil {
 		zlog.Panic().Err(err).Msg("[core] Can't create app controller thing")
 	}
@@ -64,6 +67,22 @@ func AddAppController(p *eriaproducer.EriaProducer, instance string) {
 	eriaAppControllerThing.SetPropertyReadHandler("logLevel", logLevelRead)
 	eriaAppControllerThing.SetPropertyWriteHandler("logLevel", logLevelWrite)
 	eriaAppControllerThing.SetPropertyReadHandler("automations", automationsRead)
+}
+
+// controllerID builds the controller Thing id, also its mDNS instance name.
+// It must be unique on the network: `instance` is empty for most apps and
+// the same app runs on several hosts (one agent per node), so the id adds
+// "<binary>@<host>". The "eria:app:controler:" prefix (sic) is kept: the
+// Home Assistant integration recognizes controllers by it.
+func controllerID(instance string) string {
+	host, _ := os.Hostname()
+	host, _, _ = strings.Cut(host, ".") // short name: dots are escaped in DNS-SD
+	bin := strings.ReplaceAll(filepath.Base(os.Args[0]), ".", "-")
+	id := "eria:app:controler:" + bin + "@" + host
+	if instance != "" {
+		id += ":" + instance
+	}
+	return id
 }
 
 func automationsRead(t producer.ExposedThing, name string, parameters map[string]interface{}) (interface{}, error) {

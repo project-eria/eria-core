@@ -18,8 +18,11 @@ de log à chaud, sans redémarrage).
 
 ### Identité du Thing
 
-- **ID (`urn`)** : `eria:app:controler:<instance>` — `<instance>` est l'argument
-  passé à `eria.Producer(instance)`.
+- **ID (`urn`)** : `eria:app:controler:<binaire>@<machine>[:<instance>]` —
+  unique sur le réseau (c'est aussi le nom de l'instance mDNS) ; `<instance>`
+  est l'argument passé à `eria.Producer(instance)`, omis s'il est vide. Le
+  préfixe `eria:app:controler:` est stable : l'intégration Home Assistant
+  reconnaît les contrôleurs grâce à lui.
 - **Référence / préfixe d'URL** : `eria` → toutes les routes sont servies sous
   `/eria`.
 - **Sécurité** : `nosec_sc` (aucune authentification).
