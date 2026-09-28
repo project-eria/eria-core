@@ -54,8 +54,8 @@ github.com/mitchellh/go-wordwrap v1.0.1/go.mod h1:R62XHJLzvMFRBbcrT7m7WgmE1eOyTS
 github.com/molecule-man/go-brrr v1.1.1 h1:KYwusQhjtV3smALnhmafZf4OBrh7vP4p8O47DyUmmuY=
 github.com/molecule-man/go-brrr v1.1.1/go.mod h1:7ybW6/7gA3oKY45jOfVNjSJDtrr6ea4tzbsTkjmQDC4=
 github.com/pkg/diff v0.0.0-20210226163009-20ebb0f2a09e/go.mod h1:pJLUxLENpZxwdsKMEsNbx1VGcRFpLqf3715MtcvvzbA=
-github.com/project-eria/go-wot v1.8.0 h1:fIh7uieN5NbcDg9DM54Mxt5zNaMa3kkHNFLxRFfPJCA=
-github.com/project-eria/go-wot v1.8.0/go.mod h1:1kEYDHwaCl339L5a5/LfKNa8vq4EKqzf4diQPZo6hes=
+github.com/project-eria/go-wot v1.8.1 h1:mb/IijhRLULRJhPbC8QVTmkEmkqYtcwI2EWgX/yrmEw=
+github.com/project-eria/go-wot v1.8.1/go.mod h1:1kEYDHwaCl339L5a5/LfKNa8vq4EKqzf4diQPZo6hes=
 github.com/robfig/cron/v3 v3.0.1 h1:WdRxkvbJztn8LMz/QEvLN5sBU+xKpSqwwUO1Pjr4qDs=
 github.com/robfig/cron/v3 v3.0.1/go.mod h1:eQICP3HwyT7UooqI/z+Ov+PtYAWygg1TEWWzGIFLtro=
 github.com/rogpeppe/go-internal v1.9.0/go.mod h1:WtVeX8xhTBvf0smdhujwtBcq4Qrzq/fJaraNFVN+nFs=
