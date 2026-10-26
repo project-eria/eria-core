@@ -99,10 +99,13 @@ func getAutomation(c AutomationConfig) (*Automation, *Observables, error) {
 
 // plan computes the set of actions to schedule now: for each group, the first
 // schedule entry whose conditions all match wins; an entry without a schedule
-// disables the group.
+// disables the group. A group that stops matching resolves its action when it
+// implements actionResolver.
 func (automation *Automation) plan(now time.Time) []scheduledAction {
 	var planned []scheduledAction
+	var resolvers []actionResolver
 	for gi, group := range automation.groups {
+		active := false
 		for _, entry := range group.entries {
 			ok, err := checkConditions(entry.conditions, now)
 			if err != nil {
@@ -118,9 +121,26 @@ func (automation *Automation) plan(now time.Time) []scheduledAction {
 					zlog.Error().Err(err).Str("automation", automation.name).Int("group", gi).Msg("[automations:plan]")
 				} else {
 					planned = append(planned, scheduledAction{schedule: entry.schedule, action: group.action})
+					active = true
 				}
 			}
 			break
+		}
+		// Conditions went from true to false: undo the action if it supports it
+		// (e.g. resolve a raised notice).
+		_mu.Lock()
+		wasActive := automation.groups[gi].active
+		automation.groups[gi].active = active
+		_mu.Unlock()
+		if resolver, ok := group.action.(actionResolver); ok && wasActive && !active {
+			resolvers = append(resolvers, resolver)
+		}
+	}
+	// ponytail: only true->false transitions seen by this process resolve; a
+	// notice raised before a restart stays open until its condition flips again.
+	for _, resolver := range resolvers {
+		if err := resolver.resolve(); err != nil {
+			zlog.Error().Err(err).Str("automation", automation.name).Msg("[automations:plan] Resolve failed")
 		}
 	}
 	return planned

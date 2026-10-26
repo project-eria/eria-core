@@ -24,6 +24,20 @@ No condition means it is executed by default.
 	- `body` optionnel, envoyé en `application/json` (ignoré en GET)
 	- timeout fixe de 10s ; un statut HTTP >= 400 est traité comme un échec
 	- e.g. `webhook|https://ha.local/api/webhook/mon-id|body={"event":"volets fermés"}`
+- `notify|key=<clé>|severity=<info|warning|alert>|title=<titre>|body=<texte>|audience=<all|profile>` — lève une notice
+	- invoque l'action `raise` du Thing `service-notices`, trouvé par son tag : le déclarer dans `remoteThings` avec `tags: [service-notices]`
+	- entrée envoyée : `{key, source: "house", severity, title, body, audience, thing}` (`thing` = premier thing de l'automation, s'il y en a)
+	- `key` et `title` obligatoires ; `key` déduplique la notice
+	- `severity` optionnel, défaut `info` ; `audience` optionnel, défaut `all` ; `body` optionnel
+	- résolution automatique : quand les conditions du groupe repassent à faux (plus aucune branche planifiée), l'action `resolve {key}` est invoquée
+	- limite : seule une transition vraie → faux vue par le processus résout ; une notice levée avant un redémarrage reste ouverte jusqu'au prochain basculement
+	- e.g.
+	  ```yaml
+	  - action: notify|key=garage-ouvert|severity=warning|title=Porte de garage ouverte
+	    schedules:
+	      - conditions: [property|open==true]
+	        schedule: immediate
+	  ```
 
 ## Scheduling
 - `immediate`: Immediate run

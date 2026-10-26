@@ -53,6 +53,7 @@ type scheduleEntry struct {
 type actionGroup struct {
 	action  ActionRunner
 	entries []scheduleEntry
+	active  bool // a scheduled branch matched at the last planning (guarded by _mu)
 }
 
 // scheduledAction binds a selected schedule to the action it runs.

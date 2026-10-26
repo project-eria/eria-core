@@ -13,11 +13,15 @@ type ActionRunner interface {
 }
 
 // getActionRunner dispatches on the action type: `webhook|<url>|...` calls an
-// HTTP URL, anything else is a WoT action on the automation's things.
+// HTTP URL, `notify|...` raises a notice, anything else is a WoT action on the
+// automation's things.
 func getActionRunner(thingRefs []string, automationName string, actionStr string) (ActionRunner, error) {
 	actionStr = strings.TrimSpace(actionStr)
 	if strings.HasPrefix(actionStr, webhookPrefix) {
 		return getWebhookAction(automationName, actionStr)
+	}
+	if strings.HasPrefix(actionStr, notifyPrefix) {
+		return getNotifyAction(thingRefs, automationName, actionStr)
 	}
 	return getAction(thingRefs, automationName, actionStr)
 }
