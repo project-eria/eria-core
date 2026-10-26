@@ -26,7 +26,7 @@ No condition means it is executed by default.
 	- e.g. `webhook|https://ha.local/api/webhook/mon-id|body={"event":"volets fermés"}`
 - `notify|key=<clé>|severity=<info|warning|alert>|title=<titre>|body=<texte>|audience=<all|profile>` — lève une notice
 	- invoque l'action `raise` du Thing `service-notices`, trouvé par son tag : le déclarer dans `remoteThings` avec `tags: [service-notices]`
-	- entrée envoyée : `{key, source: "house", severity, title, body, audience, thing}` (`thing` = premier thing de l'automation, s'il y en a)
+	- entrée envoyée : `{key, source: "house", severity, title, body, audience, thing}` (`thing` = id du TD du premier thing de l'automation, s'il y en a)
 	- `key` et `title` obligatoires ; `key` déduplique la notice
 	- `severity` optionnel, défaut `info` ; `audience` optionnel, défaut `all` ; `body` optionnel
 	- résolution automatique : quand les conditions du groupe repassent à faux (plus aucune branche planifiée), l'action `resolve {key}` est invoquée

@@ -7,6 +7,9 @@ import (
 	"testing"
 
 	eriaconsumer "github.com/project-eria/eria-core/consumer"
+	"github.com/project-eria/go-wot/mocks"
+	"github.com/project-eria/go-wot/producer"
+	"github.com/project-eria/go-wot/thing"
 	"github.com/rs/zerolog"
 	"github.com/stretchr/testify/suite"
 )
@@ -91,6 +94,17 @@ func (ts *NotifyActionTestSuite) Test_ParseFull() {
 		Audience:       "profile",
 		Thing:          "garage",
 	}, got)
+}
+
+func (ts *NotifyActionTestSuite) Test_ParseThingID() {
+	garage := &mocks.ExposedThing{}
+	garage.On("GetThingDescription").Return(&thing.Thing{ID: "urn:eria:dummy:rdc:garage"})
+	_exposedThings = map[string]producer.ExposedThing{"garage": garage}
+	defer func() { _exposedThings = nil }()
+
+	got, err := getNotifyAction([]string{"garage"}, "Name", "notify|key=door|title=Porte")
+	ts.Nil(err)
+	ts.Equal("urn:eria:dummy:rdc:garage", got.Thing)
 }
 
 func (ts *NotifyActionTestSuite) Test_ParseErrors() {

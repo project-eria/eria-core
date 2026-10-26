@@ -39,7 +39,7 @@ type NotifyAction struct {
 	Title          string
 	Body           string
 	Audience       string
-	Thing          string // first thing of the automation, if any
+	Thing          string // TD id of the automation's first thing, if any
 }
 
 func getNotifyAction(thingRefs []string, automationName string, actionStr string) (*NotifyAction, error) {
@@ -49,7 +49,12 @@ func getNotifyAction(thingRefs []string, automationName string, actionStr string
 		Audience:       "all",
 	}
 	if len(thingRefs) > 0 {
+		// The app links a notice to a device by its TD id; a ref that isn't a
+		// local Thing is passed as is.
 		action.Thing = thingRefs[0]
+		if t, ok := _exposedThings[thingRefs[0]]; ok && t != nil && t.GetThingDescription() != nil {
+			action.Thing = t.GetThingDescription().ID
+		}
 	}
 	actionArray := strings.Split(actionStr, "|")
 	for i := 1; i < len(actionArray); i++ {
