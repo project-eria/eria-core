@@ -72,3 +72,18 @@ func Test_DiscoverMdnsTimeout(t *testing.T) {
 	assert.Error(t, err)
 	assert.Less(t, time.Since(start), 2*time.Second)
 }
+
+func Test_DiscoverMdnsBrowsesItsNetwork(t *testing.T) {
+	defer func(orig func(context.Context, protocolDnssd.BrowseOptions) (<-chan protocolDnssd.Entry, error)) { browseFunc = orig }(browseFunc)
+	defer SetNetwork("")
+	SetNetwork("dummy")
+	var browsed string
+	fake := fakeBrowse(entry("eria:test:1", "192-168-1-42.local.", "http://192.168.1.42:8888/"))
+	browseFunc = func(ctx context.Context, opts protocolDnssd.BrowseOptions) (<-chan protocolDnssd.Entry, error) {
+		browsed = opts.Network
+		return fake(ctx, opts)
+	}
+	_, err := DiscoverMdns(context.Background(), "eria:test:1", 2*time.Second)
+	assert.NoError(t, err)
+	assert.Equal(t, "dummy", browsed)
+}

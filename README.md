@@ -149,6 +149,27 @@ mdns:
 Vérification : `dns-sd -B _wot._tcp local.` (macOS) ou
 `avahi-browse -r _wot._tcp` (Linux).
 
+### Réseau
+
+Plusieurs maisons ERIA indépendantes peuvent partager un LAN. La clé
+`network` (à la racine) nomme le réseau de l'app :
+
+```yaml
+network: dummy   # absent ou vide : le réseau par défaut
+```
+
+- Le réseau par défaut s'annonce et cherche en `_wot._tcp` ; un réseau nommé
+  en `_wot-<réseau>._tcp` (1 à 11 caractères parmi `[a-z0-9-]`). Les apps de
+  réseaux différents ne se voient jamais, ni en annonce ni en découverte
+  (`remoteThings` en `mdns:`).
+- La variable d'environnement `ERIA_NETWORK` l'emporte sur la clé, **même
+  vide** (vide = réseau par défaut) : c'est ainsi que l'agent de nœud impose
+  son réseau aux apps qu'il démarre.
+- Un nom invalide est fatal au démarrage. Le réseau retenu est journalisé
+  (`[core:Init] Network`) et lisible par `eria.Network()`.
+
+Vérification : `dns-sd -B _wot-dummy._tcp local.`
+
 ### Connexion par identifiant mDNS
 
 Une entrée `remoteThings` déclare **soit** `url:` **soit** `mdns:` :

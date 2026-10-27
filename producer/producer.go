@@ -26,6 +26,7 @@ type EriaProducer struct {
 	buildDate                   string
 	mdnsEnabled                 bool
 	mdnsScheme                  string
+	mdnsNetwork                 string
 	wait                        sync.WaitGroup
 	cancel                      context.CancelFunc
 	ctx                         context.Context
@@ -55,11 +56,13 @@ func New(host string, port uint, exposedAddr string, appName string, appVersion 
 	return eriaProducer
 }
 
-// SetMdns configures the DNS-SD announcement (`_wot._tcp`) of the exposed
-// Things. Must be called before StartServer.
-func (p *EriaProducer) SetMdns(enabled bool, scheme string) {
+// SetMdns configures the DNS-SD announcement of the exposed Things, on the
+// service type of the network (`_wot._tcp` for the default one). Must be
+// called before StartServer.
+func (p *EriaProducer) SetMdns(enabled bool, scheme string, network string) {
 	p.mdnsEnabled = enabled
 	p.mdnsScheme = scheme
+	p.mdnsNetwork = network
 }
 
 func (p *EriaProducer) StartServer() {
@@ -79,8 +82,9 @@ func (p *EriaProducer) StartServer() {
 			zlog.Warn().Str("exposedAddr", p.exposedAddr).Msg("[producer:StartServer] exposedAddr is set: the mDNS announcement will point to the local address, consider mdns.disabled: true")
 		}
 		advertiser, err := protocolDnssd.NewAdvertiser(protocolDnssd.Options{
-			Port:   int(p.port),
-			Scheme: p.mdnsScheme,
+			Port:    int(p.port),
+			Scheme:  p.mdnsScheme,
+			Network: p.mdnsNetwork,
 			// The App Controller (ref "eria") is not announced, like on the
 			// ESP32: consumers reach it at /eria next to the app's own Thing
 			// (the Home Assistant integration probes it there)

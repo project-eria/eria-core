@@ -14,8 +14,17 @@ import (
 // browseFunc is injectable for tests (default: the real mDNS browse).
 var browseFunc = protocolDnssd.Browse
 
-// DiscoverMdns browses `_wot._tcp` until the requested Thing is found, and
-// returns the URL of its Thing Description.
+// _network is the ERIA network browsed by DiscoverMdns ("" = default)
+var _network string
+
+// SetNetwork sets the network DiscoverMdns browses; called by eria.Init
+func SetNetwork(network string) {
+	_network = network
+}
+
+// DiscoverMdns browses the app's network (`_wot._tcp` for the default one)
+// until the requested Thing is found, and returns the URL of its Thing
+// Description. Things of other networks are never seen.
 //
 // `instance` is matched against the DNS-SD instance name (the TD id without
 // its "urn:" prefix, e.g. "eria:test:1"), then against the mDNS host label
@@ -34,6 +43,7 @@ func DiscoverMdns(ctx context.Context, instance string, timeout time.Duration) (
 	defer cancel()
 
 	entries, err := browseFunc(ctx, protocolDnssd.BrowseOptions{
+		Network:      _network,
 		PreferIPv4:   true,
 		AllowPrivate: true,
 	})

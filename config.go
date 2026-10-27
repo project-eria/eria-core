@@ -7,13 +7,16 @@ import (
 )
 
 var eriaConfig = struct {
-	Host         string                         `yaml:"host,omitempty"`
-	Port         uint                           `yaml:"port" default:"80"`
-	Location     string                         `yaml:"location" required:"true"`
-	ExposedAddr  string                         `yaml:"exposedAddr,omitempty"`
-	Automations  []automations.AutomationConfig `yaml:"automations,omitempty"`
-	ContextsRef  string                         `yaml:"contextsRef,omitempty"`
-	Mdns         struct {
+	// Network names the ERIA network the app belongs to ("" = the default
+	// network); ERIA_NETWORK overrides it, see resolveNetwork
+	Network     string                         `yaml:"network,omitempty"`
+	Host        string                         `yaml:"host,omitempty"`
+	Port        uint                           `yaml:"port" default:"80"`
+	Location    string                         `yaml:"location" required:"true"`
+	ExposedAddr string                         `yaml:"exposedAddr,omitempty"`
+	Automations []automations.AutomationConfig `yaml:"automations,omitempty"`
+	ContextsRef string                         `yaml:"contextsRef,omitempty"`
+	Mdns        struct {
 		Disabled         bool   `yaml:"disabled,omitempty"`
 		Scheme           string `yaml:"scheme,omitempty" default:"http"`
 		DiscoveryTimeout string `yaml:"discoveryTimeout,omitempty" default:"60s"`
@@ -23,7 +26,7 @@ var eriaConfig = struct {
 
 // RemoteThingConfig declares a remote Thing to consume, either by direct URL
 // of its Thing Description, or by DNS-SD identifier (discovered on
-// `_wot._tcp`). Exactly one of Url/Mdns must be set.
+// the app's network). Exactly one of Url/Mdns must be set.
 type RemoteThingConfig struct {
 	Url  string   `yaml:"url,omitempty"`
 	Mdns string   `yaml:"mdns,omitempty"` // DNS-SD instance (TD id without "urn:") or mDNS host label

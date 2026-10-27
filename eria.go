@@ -9,6 +9,8 @@ import (
 	"syscall"
 	"time"
 
+	eriaconsumer "github.com/project-eria/eria-core/consumer"
+	"github.com/project-eria/go-wot/protocolDnssd"
 	"github.com/rs/zerolog"
 	zlog "github.com/rs/zerolog/log"
 )
@@ -116,12 +118,47 @@ func Init(appName string, config interface{}) {
 	// Load the config file
 	loadConfig(config)
 
+	network, err := resolveNetwork(eriaConfig.Network)
+	if err != nil {
+		zlog.Fatal().Err(err).Msg("[core:Init] Invalid network")
+	}
+	eriaConfig.Network = network
+	eriaconsumer.SetNetwork(network)
+	zlog.Info().Str("network", networkLabel(network)).Msg("[core:Init] Network")
+
 	// Set the location
 	_location, err = time.LoadLocation(eriaConfig.Location)
 	if err != nil {
 		zlog.Error().Err(err).Msg("[core:Init] Can't load location")
 		return
 	}
+}
+
+// resolveNetwork returns the app's network: ERIA_NETWORK when set, even
+// empty (the node agent imposes its own network on the apps it runs), else
+// the configured one
+func resolveNetwork(configured string) (string, error) {
+	network := configured
+	if env, ok := os.LookupEnv("ERIA_NETWORK"); ok {
+		network = env
+	}
+	if _, err := protocolDnssd.ServiceType(network); err != nil {
+		return "", err
+	}
+	return network, nil
+}
+
+// networkLabel names the default network in logs
+func networkLabel(network string) string {
+	if network == "" {
+		return "default"
+	}
+	return network
+}
+
+// Network returns the ERIA network of the app ("" = the default network)
+func Network() string {
+	return eriaConfig.Network
 }
 
 // Return the location
