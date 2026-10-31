@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"sync"
 
+	"github.com/gofiber/fiber/v2"
 	"github.com/project-eria/go-wot/producer"
 	"github.com/project-eria/go-wot/protocolDnssd"
 	"github.com/project-eria/go-wot/protocolHttp"
@@ -32,6 +33,7 @@ type EriaProducer struct {
 	ctx                         context.Context
 	things                      map[string]producer.ExposedThing
 	propertyDefaultDataHandlers map[string]map[string]*PropertyData
+	guard                       fiber.Handler
 	*producer.Producer
 }
 
@@ -65,9 +67,19 @@ func (p *EriaProducer) SetMdns(enabled bool, scheme string, network string) {
 	p.mdnsNetwork = network
 }
 
+// Guard runs h before every HTTP and WebSocket handler of the exposed
+// Things (the eria-manager master checks its admin token there). Must be
+// called before StartServer.
+func (p *EriaProducer) Guard(h fiber.Handler) {
+	p.guard = h
+}
+
 func (p *EriaProducer) StartServer() {
 	addr := fmt.Sprintf("%s:%d", p.host, p.port)
 	httpServer := protocolHttp.NewServer(addr, p.exposedAddr, p.appName, fmt.Sprintf("%s %s (%s)", p.appName, p.appVersion, p.buildDate))
+	if p.guard != nil {
+		httpServer.Use(p.guard) // before the WebSocket upgrade and the routes
+	}
 	wsServer := protocolWebSocket.NewServer(httpServer)
 	// wsServer Needs to be added BEFORE httpServer,
 	// in order to call the .Use(WS) middleware, before the .Get(HTTP)

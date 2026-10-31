@@ -4,6 +4,7 @@ go 1.26.0
 
 require (
 	github.com/go-co-op/gocron/v2 v2.22.0
+	github.com/gofiber/fiber/v2 v2.52.15
 	github.com/gookit/goutil v0.8.0
 	github.com/project-eria/go-wot v1.9.0
 	github.com/rs/zerolog v1.35.1
@@ -15,7 +16,6 @@ require (
 	github.com/brutella/dnssd v1.2.14 // indirect
 	github.com/clipperhouse/uax29/v2 v2.7.0 // indirect
 	github.com/fasthttp/websocket v1.5.12 // indirect
-	github.com/gofiber/fiber/v2 v2.52.15 // indirect
 	github.com/gofiber/websocket/v2 v2.2.1 // indirect
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/gorilla/websocket v1.5.3 // indirect
