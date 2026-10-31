@@ -18,7 +18,7 @@ func Producer(instance string) *eriaproducer.EriaProducer {
 		zlog.Trace().Msg("[core:GetProducer] Creating producer")
 		eriaProducer = eriaproducer.New(eriaConfig.Host, eriaConfig.Port, eriaConfig.ExposedAddr, _appName, AppVersion, BuildDate)
 		eriaProducer.SetMdns(!eriaConfig.Mdns.Disabled, eriaConfig.Mdns.Scheme, eriaConfig.Network)
-		a := eriaConfig.Auth
+		a := eriaConfig.Guard
 		g, err := guard.New(guard.Config{Channel: a.Channel, Deployment: a.Deployment, Keyset: a.Keyset, Roots: a.Roots})
 		if err != nil {
 			zlog.Fatal().Err(err).Msg("[core:Producer] Can't load the auth keyset")
