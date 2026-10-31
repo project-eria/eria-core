@@ -22,6 +22,14 @@ var eriaConfig = struct {
 		DiscoveryTimeout string `yaml:"discoveryTimeout,omitempty" default:"60s"`
 	} `yaml:"mdns,omitempty"`
 	RemoteThings []RemoteThingConfig `yaml:"remoteThings,omitempty"`
+	// Auth guards the exposed Things with eria-auth tokens (AUTH-DESIGN
+	// §2.7): without a keyset file, generation 0 (nosec, with a warning).
+	Auth struct {
+		Channel    string `yaml:"channel,omitempty"`    // eria-auth Things channel: http://auth:8444
+		Deployment string `yaml:"deployment,omitempty"` // aud of the tokens
+		Keyset     string `yaml:"keyset,omitempty"`     // auth keyset signed by the deployment key
+		Roots      string `yaml:"roots,omitempty"`      // deployment roots, PEM
+	} `yaml:"auth,omitempty"`
 }{}
 
 // RemoteThingConfig declares a remote Thing to consume, either by direct URL

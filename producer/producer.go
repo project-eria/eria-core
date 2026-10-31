@@ -6,6 +6,7 @@ import (
 	"sync"
 
 	"github.com/gofiber/fiber/v2"
+	"github.com/project-eria/go-wot/guard"
 	"github.com/project-eria/go-wot/producer"
 	"github.com/project-eria/go-wot/protocolDnssd"
 	"github.com/project-eria/go-wot/protocolHttp"
@@ -34,6 +35,7 @@ type EriaProducer struct {
 	things                      map[string]producer.ExposedThing
 	propertyDefaultDataHandlers map[string]map[string]*PropertyData
 	guard                       fiber.Handler
+	authGuard                   *guard.Guard
 	*producer.Producer
 }
 
@@ -74,9 +76,23 @@ func (p *EriaProducer) Guard(h fiber.Handler) {
 	p.guard = h
 }
 
+// SetAuthGuard checks eria-auth tokens on the exposed Things (AUTH-DESIGN
+// §2.7), first of all. Must be called before StartServer.
+func (p *EriaProducer) SetAuthGuard(g *guard.Guard) {
+	p.authGuard = g
+}
+
 func (p *EriaProducer) StartServer() {
 	addr := fmt.Sprintf("%s:%d", p.host, p.port)
-	httpServer := protocolHttp.NewServer(addr, p.exposedAddr, p.appName, fmt.Sprintf("%s %s (%s)", p.appName, p.appVersion, p.buildDate))
+	var guards []fiber.Handler
+	if p.authGuard != nil {
+		for ref, t := range p.things {
+			p.authGuard.Expose(ref, t)
+		}
+		guards = append(guards, p.authGuard.Handler)
+		go p.authGuard.Run(p.ctx)
+	}
+	httpServer := protocolHttp.NewServer(addr, p.exposedAddr, p.appName, fmt.Sprintf("%s %s (%s)", p.appName, p.appVersion, p.buildDate), guards...)
 	if p.guard != nil {
 		httpServer.Use(p.guard) // before the WebSocket upgrade and the routes
 	}
