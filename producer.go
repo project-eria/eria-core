@@ -3,6 +3,7 @@ package eria
 import (
 	"github.com/project-eria/eria-core/model"
 	eriaproducer "github.com/project-eria/eria-core/producer"
+	"github.com/project-eria/go-wot/auth"
 	"github.com/project-eria/go-wot/guard"
 	"github.com/project-eria/go-wot/securityScheme"
 	"github.com/project-eria/go-wot/thing"
@@ -19,7 +20,11 @@ func Producer(instance string) *eriaproducer.EriaProducer {
 		eriaProducer = eriaproducer.New(eriaConfig.Host, eriaConfig.Port, eriaConfig.ExposedAddr, _appName, AppVersion, BuildDate)
 		eriaProducer.SetMdns(!eriaConfig.Mdns.Disabled, eriaConfig.Mdns.Scheme, eriaConfig.Network)
 		a := eriaConfig.Guard
-		g, err := guard.New(guard.Config{Channel: a.Channel, Deployment: a.Deployment, Keyset: a.Keyset, Roots: a.Roots})
+		key, err := auth.LoadAppKey()
+		if err != nil {
+			zlog.Fatal().Err(err).Msg("[core:Producer] Can't load the app key")
+		}
+		g, err := guard.New(guard.Config{Channel: a.Channel, Deployment: a.Deployment, Keyset: a.Keyset, Roots: a.Roots, AppKey: key})
 		if err != nil {
 			zlog.Fatal().Err(err).Msg("[core:Producer] Can't load the auth keyset")
 		}
