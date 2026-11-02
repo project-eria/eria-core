@@ -26,7 +26,11 @@ func BackoffMethod(url string) (*thing.Thing, error) {
 	var err error
 	var resp *http.Response
 	for _, backoff := range backoffSchedule {
-		resp, err = http.Get(url)
+		req, _ := http.NewRequest(http.MethodGet, url, nil)
+		if t := token(); t != "" {
+			req.Header.Set("Authorization", "Bearer "+t)
+		}
+		resp, err = http.DefaultClient.Do(req)
 		if err == nil {
 			break
 		}

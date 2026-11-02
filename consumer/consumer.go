@@ -19,11 +19,19 @@ type EriaConsumer struct {
 	*consumer.Consumer
 }
 
+// Token is the app's service token sent to the consumed Things, "" for none
+// (set by eria-core when the app has a key).
+var Token = func() string { return "" }
+
+func token() string { return Token() }
+
 func New() *EriaConsumer {
 	c := consumer.New()
 	httpClient := protocolHttp.NewClient()
+	httpClient.Token = token
 	c.AddClient(httpClient)
 	wsClient := protocolWebSocket.NewClient()
+	wsClient.Token = token
 	c.AddClient(wsClient)
 
 	return &EriaConsumer{

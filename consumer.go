@@ -16,6 +16,7 @@ var (
 func Consumer() *eriaconsumer.EriaConsumer {
 	if eriaConsumer == nil {
 		zlog.Trace().Msg("[core:GetConsumer] Creating consumer")
+		startServiceTokens()
 		eriaConsumer = eriaconsumer.New()
 	}
 	return eriaConsumer
