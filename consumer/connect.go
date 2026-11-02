@@ -27,7 +27,7 @@ func BackoffMethod(url string) (*thing.Thing, error) {
 	var resp *http.Response
 	for _, backoff := range backoffSchedule {
 		req, _ := http.NewRequest(http.MethodGet, url, nil)
-		if t := token(); t != "" {
+		if t := token(url); t != "" {
 			req.Header.Set("Authorization", "Bearer "+t)
 		}
 		resp, err = http.DefaultClient.Do(req)

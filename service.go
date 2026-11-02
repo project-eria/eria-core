@@ -7,7 +7,6 @@ import (
 	"sync"
 	"time"
 
-	eriaconsumer "github.com/project-eria/eria-core/consumer"
 	"github.com/project-eria/go-wot/auth"
 	zlog "github.com/rs/zerolog/log"
 )
@@ -17,9 +16,8 @@ import (
 // house, the app proves its key to auth and sends its service token to the
 // Things it consumes.
 //
-// ponytail: the token goes to every Thing consumed, found by URL or mDNS,
-// as eria-ui-server does; only to the master's inventory with step 3c-2
-// (F037).
+// The token goes only to the Things of the master's inventory (F037,
+// inventory.go): without `guard.master`, nowhere.
 
 var (
 	_appKeyOnce sync.Once
@@ -55,13 +53,17 @@ func startServiceTokens() {
 		if err != nil {
 			zlog.Fatal().Err(err).Msg("[core:startServiceTokens] Can't prepare the service token")
 		}
-		eriaconsumer.Token = tokens.Token
 		ready := make(chan struct{})
 		go tokens.Run(context.Background(), ready)
 		select {
 		case <-ready:
 		case <-time.After(30 * time.Second):
 		}
+		if a.Master == "" {
+			zlog.Warn().Msg("[core:startServiceTokens] No guard.master: the service token is sent nowhere")
+			return
+		}
+		startInventory(a.Master, tokens)
 	})
 }
 

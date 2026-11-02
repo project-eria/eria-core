@@ -29,6 +29,7 @@ var eriaConfig = struct {
 		Deployment string `yaml:"deployment,omitempty"` // aud of the tokens
 		Keyset     string `yaml:"keyset,omitempty"`     // auth keyset signed by the deployment key
 		Roots      string `yaml:"roots,omitempty"`      // deployment roots, PEM
+		Master     string `yaml:"master,omitempty"`     // master's TD URL: its inventory says where the service token may go (F037)
 	} `yaml:"guard,omitempty"`
 }{}
 

@@ -19,11 +19,11 @@ type EriaConsumer struct {
 	*consumer.Consumer
 }
 
-// Token is the app's service token sent to the consumed Things, "" for none
-// (set by eria-core when the app has a key).
-var Token = func() string { return "" }
+// Token is the app's service token sent to url, "" for none (set by
+// eria-core when the app has a key, for the Things of the master's inventory).
+var Token = func(url string) string { return "" }
 
-func token() string { return Token() }
+func token(url string) string { return Token(url) }
 
 func New() *EriaConsumer {
 	c := consumer.New()

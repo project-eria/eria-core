@@ -1,7 +1,6 @@
 package eria
 
 import (
-	"context"
 	"sync"
 	"time"
 
@@ -53,7 +52,7 @@ func ConnectThings() {
 func connectRemoteThing(remoteThing RemoteThingConfig, wg *sync.WaitGroup, discoveryTimeout time.Duration) {
 	url := remoteThing.Url
 	if remoteThing.Mdns != "" {
-		discovered, err := eriaconsumer.DiscoverMdns(context.Background(), remoteThing.Mdns, discoveryTimeout)
+		discovered, err := discover(remoteThing.Mdns, discoveryTimeout)
 		if err != nil {
 			// Only reachable with a deadline, i.e. in required mode
 			zlog.Fatal().Err(err).Str("mdns", remoteThing.Mdns).Msg("[core:ConnectThings] Can't discover remote Thing")
@@ -103,7 +102,7 @@ func onLossHandler(remoteThing RemoteThingConfig) func(*eriaconsumer.EriaThing, 
 			zlog.Warn().Err(err).Str("mdns", remoteThing.Mdns).Str("url", remoteThing.Url).Msg("[core:ConnectThings] Remote Thing lost, rediscovering")
 			url := remoteThing.Url
 			if remoteThing.Mdns != "" {
-				discovered, err := eriaconsumer.DiscoverMdns(context.Background(), remoteThing.Mdns, 0)
+				discovered, err := discover(remoteThing.Mdns, 0)
 				if err != nil {
 					zlog.Error().Err(err).Str("mdns", remoteThing.Mdns).Msg("[core:ConnectThings] rediscovery failed")
 					return
