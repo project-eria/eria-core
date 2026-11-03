@@ -1,8 +1,12 @@
 package eria
 
 import (
+	"os"
+	"path/filepath"
+
 	"github.com/project-eria/eria-core/model"
 	eriaproducer "github.com/project-eria/eria-core/producer"
+	"github.com/project-eria/go-wot/auth"
 	"github.com/project-eria/go-wot/guard"
 	"github.com/project-eria/go-wot/securityScheme"
 	"github.com/project-eria/go-wot/thing"
@@ -19,7 +23,7 @@ func Producer(instance string) *eriaproducer.EriaProducer {
 		eriaProducer = eriaproducer.New(eriaConfig.Host, eriaConfig.Port, eriaConfig.ExposedAddr, _appName, AppVersion, BuildDate)
 		eriaProducer.SetMdns(!eriaConfig.Mdns.Disabled, eriaConfig.Mdns.Scheme, eriaConfig.Network)
 		a := eriaConfig.Guard
-		g, err := guard.New(guard.Config{Channel: a.Channel, Deployment: a.Deployment, Keyset: a.Keyset, Roots: a.Roots, AppKey: appKey()})
+		g, err := guard.New(guard.Config{Channel: a.Channel, Deployment: a.Deployment, Keyset: a.Keyset, Roots: a.Roots, AppKey: appKey(), Floor: timeFloor()})
 		if err != nil {
 			zlog.Fatal().Err(err).Msg("[core:Producer] Can't load the auth keyset")
 		}
@@ -27,6 +31,16 @@ func Producer(instance string) *eriaproducer.EriaProducer {
 		AddAppController(eriaProducer, instance)
 	}
 	return eriaProducer
+}
+
+// timeFloor keeps the signed time's floor (AUTH-DESIGN §4.3) beside the app
+// key, in the app's data folder; "" without a key (an app the agent did
+// not install): no floor kept.
+func timeFloor() string {
+	if path := os.Getenv(auth.AppKeyEnv); path != "" {
+		return filepath.Join(filepath.Dir(path), "time-floor")
+	}
+	return ""
 }
 
 func NewThingDescription(urn string, tdVersion string, title string, description string, capabilities []string) (*thing.Thing, error) {
