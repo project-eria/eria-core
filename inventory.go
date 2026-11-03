@@ -39,8 +39,12 @@ type inventoryCache struct {
 var _inventory *inventoryCache // nil: no service token, mDNS as before
 
 // startInventory reads the inventory once, then again in the background.
-func startInventory(master string, tokens *auth.ServiceTokens) {
-	c := &inventoryCache{master: master, token: tokens.Token, forThing: tokens.For, client: &http.Client{Timeout: 10 * time.Second}}
+func startInventory(master string, tokens *auth.ServiceTokens, roots []byte) {
+	client, err := inventory.MasterClient(roots, 10*time.Second)
+	if err != nil {
+		zlog.Fatal().Err(err).Msg("[core:inventory] Bad deployment roots")
+	}
+	c := &inventoryCache{master: master, token: tokens.Token, forThing: tokens.For, client: client}
 	c.read()
 	go func() {
 		for range time.Tick(inventoryRefresh) {

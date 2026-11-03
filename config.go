@@ -9,11 +9,18 @@ import (
 var eriaConfig = struct {
 	// Network names the ERIA network the app belongs to ("" = the default
 	// network); ERIA_NETWORK overrides it, see resolveNetwork
-	Network     string                         `yaml:"network,omitempty"`
-	Host        string                         `yaml:"host,omitempty"`
-	Port        uint                           `yaml:"port" default:"80"`
-	Location    string                         `yaml:"location" required:"true"`
-	ExposedAddr string                         `yaml:"exposedAddr,omitempty"`
+	Network     string `yaml:"network,omitempty"`
+	Host        string `yaml:"host,omitempty"`
+	Port        uint   `yaml:"port" default:"80"`
+	Location    string `yaml:"location" required:"true"`
+	ExposedAddr string `yaml:"exposedAddr,omitempty"`
+	// TLS serves the Things over HTTPS with this certificate, signed by the
+	// deployment key (the master's: eria-manager tls-self, AUTH-DESIGN §4.7
+	// step 5d); announced as https.
+	TLS struct {
+		Cert string `yaml:"cert,omitempty"`
+		Key  string `yaml:"key,omitempty"`
+	} `yaml:"tls,omitempty"`
 	Automations []automations.AutomationConfig `yaml:"automations,omitempty"`
 	ContextsRef string                         `yaml:"contextsRef,omitempty"`
 	Mdns        struct {

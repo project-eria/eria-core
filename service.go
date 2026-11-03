@@ -67,6 +67,6 @@ func startServiceTokens() {
 			zlog.Warn().Msg("[core:startServiceTokens] No guard.master: the service token is sent nowhere")
 			return
 		}
-		startInventory(master, tokens)
+		startInventory(master, tokens, deploymentRoots(cfg))
 	})
 }

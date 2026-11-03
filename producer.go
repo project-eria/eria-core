@@ -1,6 +1,7 @@
 package eria
 
 import (
+	"crypto/tls"
 	"errors"
 	"os"
 	"path/filepath"
@@ -29,6 +30,13 @@ func Producer(instance string) *eriaproducer.EriaProducer {
 			zlog.Fatal().Err(err).Msg("[core:Producer] Can't load the auth keyset")
 		}
 		eriaProducer.SetAuthGuard(g)
+		if t := eriaConfig.TLS; t.Cert != "" {
+			cert, err := tls.LoadX509KeyPair(t.Cert, t.Key)
+			if err != nil {
+				zlog.Fatal().Err(err).Msg("[core:Producer] Can't load the TLS certificate")
+			}
+			eriaProducer.SetTLS(&tls.Config{Certificates: []tls.Certificate{cert}, MinVersion: tls.VersionTLS13})
+		}
 		AddAppController(eriaProducer, instance)
 	}
 	return eriaProducer
@@ -56,6 +64,16 @@ func guardConfig() (guard.Config, string) {
 		}
 	}
 	return cfg, master
+}
+
+// deploymentRoots are the roots the master's certificate is checked with:
+// those the agent wrote, else the guard's roots file; none: plain http only.
+func deploymentRoots(cfg guard.Config) []byte {
+	if cfg.Settings != nil {
+		return []byte(cfg.Settings.Roots)
+	}
+	pem, _ := os.ReadFile(cfg.Roots)
+	return pem
 }
 
 // timeFloor keeps the signed time's floor (AUTH-DESIGN §4.3) beside the app

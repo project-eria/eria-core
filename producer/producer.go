@@ -2,6 +2,7 @@ package eriaproducer
 
 import (
 	"context"
+	"crypto/tls"
 	"fmt"
 	"sync"
 
@@ -36,6 +37,7 @@ type EriaProducer struct {
 	propertyDefaultDataHandlers map[string]map[string]*PropertyData
 	guard                       fiber.Handler
 	authGuard                   *guard.Guard
+	tls                         *tls.Config
 	*producer.Producer
 }
 
@@ -76,6 +78,13 @@ func (p *EriaProducer) Guard(h fiber.Handler) {
 	p.guard = h
 }
 
+// SetTLS serves the Things over HTTPS (and WSS). Must be called before
+// StartServer.
+func (p *EriaProducer) SetTLS(cfg *tls.Config) {
+	p.tls = cfg
+	p.mdnsScheme = "https"
+}
+
 // SetAuthGuard checks eria-auth tokens on the exposed Things (AUTH-DESIGN
 // §2.7), first of all. Must be called before StartServer.
 func (p *EriaProducer) SetAuthGuard(g *guard.Guard) {
@@ -95,6 +104,9 @@ func (p *EriaProducer) StartServer() {
 	httpServer := protocolHttp.NewServer(addr, p.exposedAddr, p.appName, fmt.Sprintf("%s %s (%s)", p.appName, p.appVersion, p.buildDate), guards...)
 	if p.guard != nil {
 		httpServer.Use(p.guard) // before the WebSocket upgrade and the routes
+	}
+	if p.tls != nil {
+		httpServer.SetTLS(p.tls)
 	}
 	wsServer := protocolWebSocket.NewServer(httpServer)
 	// wsServer Needs to be added BEFORE httpServer,
