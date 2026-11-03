@@ -1,6 +1,7 @@
 package eria
 
 import (
+	"errors"
 	"os"
 	"path/filepath"
 
@@ -22,8 +23,8 @@ func Producer(instance string) *eriaproducer.EriaProducer {
 		zlog.Trace().Msg("[core:GetProducer] Creating producer")
 		eriaProducer = eriaproducer.New(eriaConfig.Host, eriaConfig.Port, eriaConfig.ExposedAddr, _appName, AppVersion, BuildDate)
 		eriaProducer.SetMdns(!eriaConfig.Mdns.Disabled, eriaConfig.Mdns.Scheme, eriaConfig.Network)
-		a := eriaConfig.Guard
-		g, err := guard.New(guard.Config{Channel: a.Channel, Deployment: a.Deployment, Keyset: a.Keyset, Roots: a.Roots, AppKey: appKey(), Floor: timeFloor()})
+		cfg, _ := guardConfig()
+		g, err := guard.New(cfg)
 		if err != nil {
 			zlog.Fatal().Err(err).Msg("[core:Producer] Can't load the auth keyset")
 		}
@@ -31,6 +32,30 @@ func Producer(instance string) *eriaproducer.EriaProducer {
 		AddAppController(eriaProducer, instance)
 	}
 	return eriaProducer
+}
+
+// DeployPath is set by an app whose Things check the master's signature on
+// every command themselves (the agent): its guard asks no token.
+var DeployPath bool
+
+// guardConfig is the app's guard, and the master's URL for the inventory:
+// the `guard:` block, or, without a keyset there, the settings the agent
+// wrote beside the app key on the master's order (AUTH-DESIGN §4.7 step 5c).
+func guardConfig() (guard.Config, string) {
+	a := eriaConfig.Guard
+	cfg := guard.Config{Channel: a.Channel, Deployment: a.Deployment, Keyset: a.Keyset, Roots: a.Roots,
+		AppKey: appKey(), Floor: timeFloor(), DeployPath: DeployPath}
+	master := a.Master
+	if path := os.Getenv(auth.AppKeyEnv); a.Keyset == "" && path != "" {
+		s, err := guard.ReadSettings(path)
+		switch {
+		case err == nil:
+			cfg.Settings, cfg.Channel, master = &s, s.Channel, s.Master
+		case !errors.Is(err, os.ErrNotExist):
+			zlog.Fatal().Err(err).Msg("[core:guardConfig] Can't read the activation written by the agent")
+		}
+	}
+	return cfg, master
 }
 
 // timeFloor keeps the signed time's floor (AUTH-DESIGN §4.3) beside the app

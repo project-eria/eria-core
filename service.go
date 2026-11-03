@@ -3,6 +3,7 @@ package eria
 import (
 	"context"
 	"crypto/ed25519"
+	"errors"
 	"os"
 	"sync"
 	"time"
@@ -40,16 +41,19 @@ func appKey() ed25519.PrivateKey {
 // then renews it in the background; the consumer sends it.
 func startServiceTokens() {
 	_tokensOnce.Do(func() {
-		a := eriaConfig.Guard
+		cfg, master := guardConfig()
 		key := appKey()
-		if key == nil || a.Channel == "" || a.Keyset == "" {
+		if key == nil || cfg.Channel == "" || DeployPath {
 			return
 		}
-		ks, err := loadKeyset(a.Keyset, a.Roots)
+		ks, _, err := cfg.OpenKeyset()
+		if errors.Is(err, os.ErrNotExist) {
+			return // not activated
+		}
 		if err != nil {
 			zlog.Fatal().Err(err).Msg("[core:startServiceTokens] Can't load the auth keyset")
 		}
-		tokens, err := auth.NewServiceTokens(a.Channel, key, ks)
+		tokens, err := auth.NewServiceTokens(cfg.Channel, key, ks)
 		if err != nil {
 			zlog.Fatal().Err(err).Msg("[core:startServiceTokens] Can't prepare the service token")
 		}
@@ -59,27 +63,10 @@ func startServiceTokens() {
 		case <-ready:
 		case <-time.After(30 * time.Second):
 		}
-		if a.Master == "" {
+		if master == "" {
 			zlog.Warn().Msg("[core:startServiceTokens] No guard.master: the service token is sent nowhere")
 			return
 		}
-		startInventory(a.Master, tokens)
+		startInventory(master, tokens)
 	})
-}
-
-func loadKeyset(keysetFile, rootsFile string) (auth.Keyset, error) {
-	data, err := os.ReadFile(keysetFile)
-	if err != nil {
-		return auth.Keyset{}, err
-	}
-	rootsPEM, err := os.ReadFile(rootsFile)
-	if err != nil {
-		return auth.Keyset{}, err
-	}
-	deploy, err := auth.DeploymentKeys(rootsPEM)
-	if err != nil {
-		return auth.Keyset{}, err
-	}
-	ks, _, err := auth.OpenKeyset(data, deploy)
-	return ks, err
 }
