@@ -13,7 +13,7 @@ import (
 )
 
 func TestInventory(t *testing.T) {
-	master := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	coordinator := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.URL.Path != "/inventory" || r.Header.Get("Authorization") != "Bearer svc" {
 			w.WriteHeader(http.StatusForbidden)
 			return
@@ -25,11 +25,11 @@ func TestInventory(t *testing.T) {
 			{ID: "eria:notices", URL: "http://127.0.0.1:8104/"},
 		})
 	}))
-	defer master.Close()
+	defer coordinator.Close()
 
 	token := ""
-	c := &inventoryCache{master: master.URL + "/", token: func() string { return token },
-		forThing: func(id string) string { return "for " + id }, client: master.Client()}
+	c := &inventoryCache{coordinator: coordinator.URL + "/", token: func() string { return token },
+		forThing: func(id string) string { return "for " + id }, client: coordinator.Client()}
 	c.read()
 	assert.Empty(t, c.find("eria:esp:1"), "no token, no inventory")
 	token = "svc"

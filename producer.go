@@ -42,31 +42,31 @@ func Producer(instance string) *eriaproducer.EriaProducer {
 	return eriaProducer
 }
 
-// DeployPath is set by an app whose Things check the master's signature on
+// DeployPath is set by an app whose Things check the coordinator's signature on
 // every command themselves (the agent): its guard asks no token.
 var DeployPath bool
 
-// guardConfig is the app's guard, and the master's URL for the inventory:
+// guardConfig is the app's guard, and the coordinator's URL for the inventory:
 // the `guard:` block, or, without a keyset there, the settings the agent
-// wrote beside the app key on the master's order (AUTH-DESIGN §4.7 step 5c).
+// wrote beside the app key on the coordinator's order (AUTH-DESIGN §4.7 step 5c).
 func guardConfig() (guard.Config, string) {
 	a := eriaConfig.Guard
 	cfg := guard.Config{Channel: a.Channel, Deployment: a.Deployment, Keyset: a.Keyset, Roots: a.Roots,
 		AppKey: appKey(), Floor: timeFloor(), DeployPath: DeployPath}
-	master := a.Master
+	coordinator := a.Coordinator
 	if path := os.Getenv(auth.AppKeyEnv); a.Keyset == "" && path != "" {
 		s, err := guard.ReadSettings(path)
 		switch {
 		case err == nil:
-			cfg.Settings, cfg.Channel, master = &s, s.Channel, s.Master
+			cfg.Settings, cfg.Channel, coordinator = &s, s.Channel, s.Coordinator
 		case !errors.Is(err, os.ErrNotExist):
 			zlog.Fatal().Err(err).Msg("[core:guardConfig] Can't read the activation written by the agent")
 		}
 	}
-	return cfg, master
+	return cfg, coordinator
 }
 
-// deploymentRoots are the roots the master's certificate is checked with:
+// deploymentRoots are the roots the coordinator's certificate is checked with:
 // those the agent wrote, else the guard's roots file; none: plain http only.
 func deploymentRoots(cfg guard.Config) []byte {
 	if cfg.Settings != nil {

@@ -20,7 +20,7 @@ type EriaConsumer struct {
 }
 
 // Token is the app's service token sent to url, "" for none (set by
-// eria-core when the app has a key, for the Things of the master's inventory).
+// eria-core when the app has a key, for the Things of the coordinator's inventory).
 var Token = func(url string) string { return "" }
 
 func token(url string) string { return Token(url) }

@@ -95,7 +95,7 @@ func (ts *PlanTestSuite) Test_Disabled() {
 		action: &fakeAction{},
 		entries: []scheduleEntry{
 			{conditions: []Condition{&conditionContexts{{context: "holiday"}}}}, // matches, no schedule -> disabled
-			{schedule: &scheduleImmediate{}},                                     // not reached
+			{schedule: &scheduleImmediate{}},                                    // not reached
 		},
 	}}}
 	ts.Empty(a.plan(ts.now))

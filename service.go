@@ -17,8 +17,8 @@ import (
 // house, the app proves its key to auth and sends its service token to the
 // Things it consumes.
 //
-// The token goes only to the Things of the master's inventory (F037,
-// inventory.go): without `guard.master`, nowhere.
+// The token goes only to the Things of the coordinator's inventory (F037,
+// inventory.go): without `guard.coordinator`, nowhere.
 
 var (
 	_appKeyOnce sync.Once
@@ -41,7 +41,7 @@ func appKey() ed25519.PrivateKey {
 // then renews it in the background; the consumer sends it.
 func startServiceTokens() {
 	_tokensOnce.Do(func() {
-		cfg, master := guardConfig()
+		cfg, coordinator := guardConfig()
 		key := appKey()
 		if key == nil || cfg.Channel == "" || DeployPath {
 			return
@@ -63,10 +63,10 @@ func startServiceTokens() {
 		case <-ready:
 		case <-time.After(30 * time.Second):
 		}
-		if master == "" {
-			zlog.Warn().Msg("[core:startServiceTokens] No guard.master: the service token is sent nowhere")
+		if coordinator == "" {
+			zlog.Warn().Msg("[core:startServiceTokens] No guard.coordinator: the service token is sent nowhere")
 			return
 		}
-		startInventory(master, tokens, deploymentRoots(cfg))
+		startInventory(coordinator, tokens, deploymentRoots(cfg))
 	})
 }

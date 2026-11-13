@@ -17,7 +17,7 @@ import (
 	zlog "github.com/rs/zerolog/log"
 )
 
-// The master's inventory (AUTH-DESIGN §2.4, F037): an app with a service
+// The coordinator's inventory (AUTH-DESIGN §2.4, F037): an app with a service
 // token reads it, finds there the Things declared by `mdns:`, and sends a
 // token only to the URLs it lists: the one auth issued for that very Thing
 // (step 4e), worthless at any other.
@@ -27,10 +27,10 @@ import (
 var inventoryRefresh, discoverPoll = 30 * time.Second, 5 * time.Second
 
 type inventoryCache struct {
-	master   string
-	token    func() string             // the app's token for the master
-	forThing func(thing string) string // its token for a Thing
-	client   *http.Client
+	coordinator string
+	token       func() string             // the app's token for the coordinator
+	forThing    func(thing string) string // its token for a Thing
+	client      *http.Client
 
 	mu   sync.RWMutex
 	list []inventory.Entry
@@ -39,12 +39,12 @@ type inventoryCache struct {
 var _inventory *inventoryCache // nil: no service token, mDNS as before
 
 // startInventory reads the inventory once, then again in the background.
-func startInventory(master string, tokens *auth.ServiceTokens, roots []byte) {
-	client, err := inventory.MasterClient(roots, 10*time.Second)
+func startInventory(coordinator string, tokens *auth.ServiceTokens, roots []byte) {
+	client, err := inventory.CoordinatorClient(roots, 10*time.Second)
 	if err != nil {
 		zlog.Fatal().Err(err).Msg("[core:inventory] Bad deployment roots")
 	}
-	c := &inventoryCache{master: master, token: tokens.Token, forThing: tokens.For, client: client}
+	c := &inventoryCache{coordinator: coordinator, token: tokens.Token, forThing: tokens.For, client: client}
 	c.read()
 	go func() {
 		for range time.Tick(inventoryRefresh) {
@@ -60,9 +60,9 @@ func (c *inventoryCache) read() {
 	if token == "" {
 		return
 	}
-	list, err := inventory.Read(context.Background(), c.client, c.master, token)
+	list, err := inventory.Read(context.Background(), c.client, c.coordinator, token)
 	if err != nil {
-		zlog.Warn().Err(err).Msg("[core:inventory] Can't read the master's inventory, the last one kept")
+		zlog.Warn().Err(err).Msg("[core:inventory] Can't read the coordinator's inventory, the last one kept")
 		return
 	}
 	c.mu.Lock()
@@ -75,7 +75,7 @@ func (c *inventoryCache) read() {
 func (c *inventoryCache) tokenFor(u string) string {
 	e, ok := c.entryFor(u)
 	if !ok {
-		zlog.Debug().Str("url", u).Msg("[core:inventory] Not in the master's inventory: no token sent")
+		zlog.Debug().Str("url", u).Msg("[core:inventory] Not in the coordinator's inventory: no token sent")
 		return ""
 	}
 	return c.forThing(e.ID)
@@ -101,7 +101,7 @@ func (c *inventoryCache) entryFor(u string) (inventory.Entry, bool) {
 }
 
 // originsOf is origin, plus its addresses for a host name of the config: the
-// master lists the addresses mDNS announces.
+// coordinator lists the addresses mDNS announces.
 //
 // ponytail: one DNS lookup per request to a named Thing; cache it if the
 // traffic ever weighs. Trusts the network's DNS like the mDNS before it.
@@ -159,7 +159,7 @@ func discover(instance string, timeout time.Duration) (string, error) {
 			return url, nil
 		}
 		if timeout > 0 && time.Now().After(deadline) {
-			return "", fmt.Errorf("%q not in the master's inventory", instance)
+			return "", fmt.Errorf("%q not in the coordinator's inventory", instance)
 		}
 		time.Sleep(discoverPoll)
 		_inventory.read()

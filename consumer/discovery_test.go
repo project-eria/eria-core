@@ -34,7 +34,9 @@ func entry(instance, host, rawURL string) protocolDnssd.Entry {
 }
 
 func Test_DiscoverMdnsMatchInstance(t *testing.T) {
-	defer func(orig func(context.Context, protocolDnssd.BrowseOptions) (<-chan protocolDnssd.Entry, error)) { browseFunc = orig }(browseFunc)
+	defer func(orig func(context.Context, protocolDnssd.BrowseOptions) (<-chan protocolDnssd.Entry, error)) {
+		browseFunc = orig
+	}(browseFunc)
 	browseFunc = fakeBrowse(
 		entry("other:thing:1", "10-0-0-9.local.", "http://10.0.0.9:80/"),
 		entry("eria:test:1", "192-168-1-42.local.", "http://192.168.1.42:8888/"),
@@ -45,7 +47,9 @@ func Test_DiscoverMdnsMatchInstance(t *testing.T) {
 }
 
 func Test_DiscoverMdnsMatchHostLabel(t *testing.T) {
-	defer func(orig func(context.Context, protocolDnssd.BrowseOptions) (<-chan protocolDnssd.Entry, error)) { browseFunc = orig }(browseFunc)
+	defer func(orig func(context.Context, protocolDnssd.BrowseOptions) (<-chan protocolDnssd.Entry, error)) {
+		browseFunc = orig
+	}(browseFunc)
 	browseFunc = fakeBrowse(
 		entry("eria:esp:1wire:aabbcc", "eria-aabbcc.local.", "http://192.168.1.77:80/"),
 	)
@@ -55,7 +59,9 @@ func Test_DiscoverMdnsMatchHostLabel(t *testing.T) {
 }
 
 func Test_DiscoverMdnsIgnoresNonMatching(t *testing.T) {
-	defer func(orig func(context.Context, protocolDnssd.BrowseOptions) (<-chan protocolDnssd.Entry, error)) { browseFunc = orig }(browseFunc)
+	defer func(orig func(context.Context, protocolDnssd.BrowseOptions) (<-chan protocolDnssd.Entry, error)) {
+		browseFunc = orig
+	}(browseFunc)
 	browseFunc = fakeBrowse(
 		entry("other:thing:1", "10-0-0-9.local.", "http://10.0.0.9:80/"),
 	)
@@ -65,7 +71,9 @@ func Test_DiscoverMdnsIgnoresNonMatching(t *testing.T) {
 }
 
 func Test_DiscoverMdnsTimeout(t *testing.T) {
-	defer func(orig func(context.Context, protocolDnssd.BrowseOptions) (<-chan protocolDnssd.Entry, error)) { browseFunc = orig }(browseFunc)
+	defer func(orig func(context.Context, protocolDnssd.BrowseOptions) (<-chan protocolDnssd.Entry, error)) {
+		browseFunc = orig
+	}(browseFunc)
 	browseFunc = fakeBrowse() // nothing on the network
 	start := time.Now()
 	_, err := DiscoverMdns(context.Background(), "eria:test:1", 300*time.Millisecond)
@@ -74,7 +82,9 @@ func Test_DiscoverMdnsTimeout(t *testing.T) {
 }
 
 func Test_DiscoverMdnsBrowsesItsNetwork(t *testing.T) {
-	defer func(orig func(context.Context, protocolDnssd.BrowseOptions) (<-chan protocolDnssd.Entry, error)) { browseFunc = orig }(browseFunc)
+	defer func(orig func(context.Context, protocolDnssd.BrowseOptions) (<-chan protocolDnssd.Entry, error)) {
+		browseFunc = orig
+	}(browseFunc)
 	defer SetNetwork("")
 	SetNetwork("dummy")
 	var browsed string

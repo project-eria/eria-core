@@ -15,7 +15,7 @@ var eriaConfig = struct {
 	Location    string `yaml:"location" required:"true"`
 	ExposedAddr string `yaml:"exposedAddr,omitempty"`
 	// TLS serves the Things over HTTPS with this certificate, signed by the
-	// deployment key (the master's: eria-manager tls-self, AUTH-DESIGN §4.7
+	// deployment key (the coordinator's: eria-coordinator tls-self, AUTH-DESIGN §4.7
 	// step 5d); announced as https.
 	TLS struct {
 		Cert string `yaml:"cert,omitempty"`
@@ -32,11 +32,11 @@ var eriaConfig = struct {
 	// Guard checks the eria-auth tokens on the exposed Things (AUTH-DESIGN
 	// §2.7): without a keyset file, generation 0 (nosec, with a warning).
 	Guard struct {
-		Channel    string `yaml:"channel,omitempty"`    // eria-auth Things channel: http://auth:8444
-		Deployment string `yaml:"deployment,omitempty"` // aud of the tokens
-		Keyset     string `yaml:"keyset,omitempty"`     // auth keyset signed by the deployment key
-		Roots      string `yaml:"roots,omitempty"`      // deployment roots, PEM
-		Master     string `yaml:"master,omitempty"`     // master's TD URL: its inventory says where the service token may go (F037)
+		Channel     string `yaml:"channel,omitempty"`     // eria-auth Things channel: http://auth:8444
+		Deployment  string `yaml:"deployment,omitempty"`  // aud of the tokens
+		Keyset      string `yaml:"keyset,omitempty"`      // auth keyset signed by the deployment key
+		Roots       string `yaml:"roots,omitempty"`       // deployment roots, PEM
+		Coordinator string `yaml:"coordinator,omitempty"` // coordinator's TD URL: its inventory says where the service token may go (F037)
 	} `yaml:"guard,omitempty"`
 }{}
 

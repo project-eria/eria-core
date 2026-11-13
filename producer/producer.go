@@ -72,7 +72,7 @@ func (p *EriaProducer) SetMdns(enabled bool, scheme string, network string) {
 }
 
 // Guard runs h before every HTTP and WebSocket handler of the exposed
-// Things (the eria-manager master checks its admin token there). Must be
+// Things (the eria-coordinator coordinator checks its admin token there). Must be
 // called before StartServer.
 func (p *EriaProducer) Guard(h fiber.Handler) {
 	p.guard = h
