@@ -3,6 +3,7 @@ package eriaconsumer
 import (
 	"encoding/json"
 	"errors"
+	"io"
 	"net/http"
 	"time"
 
@@ -35,15 +36,22 @@ func transient(status int) bool {
 		status == http.StatusTooManyRequests || status >= 500
 }
 
+// tdClient bounds a read: a neighbour that never answers does not hold a
+// required start forever.
+var tdClient = &http.Client{Timeout: 10 * time.Second}
+
+// maxTD bounds a TD read from a neighbour (auth bounds the TDs it takes too).
+const maxTD = 1 << 20
+
 func BackoffMethod(url string) (*thing.Thing, error) {
 	var resp *http.Response
 	var err error
-	for _, backoff := range backoffSchedule {
+	for i, backoff := range backoffSchedule {
 		req, _ := http.NewRequest(http.MethodGet, url, nil)
 		if t := token(url); t != "" { // asked again each time: it may have come
 			req.Header.Set("Authorization", "Bearer "+t)
 		}
-		resp, err = http.DefaultClient.Do(req)
+		resp, err = tdClient.Do(req)
 		switch {
 		case err != nil:
 			zlog.Warn().Str("url", url).Err(err).Msgf("[core:BackoffMethod] Retrying in %v", backoff)
@@ -57,13 +65,15 @@ func BackoffMethod(url string) (*thing.Thing, error) {
 				return nil, errors.New("incorrect response")
 			}
 			var td thing.Thing
-			if err := json.NewDecoder(resp.Body).Decode(&td); err != nil {
+			if err := json.NewDecoder(io.LimitReader(resp.Body, maxTD)).Decode(&td); err != nil {
 				zlog.Error().Str("url", url).Err(err).Msg("[core:BackoffMethod]")
 				return nil, errors.New("can't decode json")
 			}
 			return &td, nil
 		}
-		time.Sleep(backoff)
+		if i < len(backoffSchedule)-1 { // no dead wait after the last try
+			time.Sleep(backoff)
+		}
 	}
 	if err != nil {
 		return nil, errors.New("can't open thing url")
