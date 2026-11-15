@@ -9,15 +9,19 @@ import (
 )
 
 var (
-	eriaConsumer *eriaconsumer.EriaConsumer
+	eriaConsumer     *eriaconsumer.EriaConsumer
+	eriaConsumerOnce sync.Once
 )
 
 func Consumer() *eriaconsumer.EriaConsumer {
-	if eriaConsumer == nil {
+	// Once: the remote Things connect in parallel and each asks for the
+	// consumer; startServiceTokens waits for auth, so without it two callers
+	// made two consumers and a Thing landed in the one dropped.
+	eriaConsumerOnce.Do(func() {
 		zlog.Trace().Msg("[core:GetConsumer] Creating consumer")
 		startServiceTokens()
 		eriaConsumer = eriaconsumer.New()
-	}
+	})
 	return eriaConsumer
 }
 
