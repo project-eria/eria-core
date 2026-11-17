@@ -2,6 +2,7 @@ package model
 
 import (
 	"errors"
+	"slices"
 
 	actionModel "github.com/project-eria/eria-core/model/action"
 	eventModel "github.com/project-eria/eria-core/model/event"
@@ -45,6 +46,11 @@ func AddModel(t *thing.Thing, modelId string, postfix string) error {
 		return errors.New("Model '" + modelId + "' not found")
 	}
 
+	// The TD names its models in @type: auth deduces the default rules of
+	// its functions from them (AUTH-DESIGN §2.4).
+	if !slices.Contains(t.AtTypes, modelId) {
+		t.AtTypes = append(t.AtTypes, modelId)
+	}
 	for key, property := range modelType.Properties {
 		id := key + postfix
 		if _, err := AddProperty(t, id, property.Meta, property.UriVariables); err != nil {
