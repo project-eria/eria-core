@@ -94,6 +94,10 @@ func getNotifyAction(thingRefs []string, automationName string, actionStr string
 	return action, nil
 }
 
+// run raises the notice on service-notices with the app's service token:
+// an app reaches only what its grants cover (AUTH-DESIGN §1.3), so an app
+// using notify| declares thing:urn:eria:service:notices:invoke in its
+// eria-app.yml.
 func (a *NotifyAction) run() error {
 	input := map[string]interface{}{
 		"key":      a.Key,
