@@ -2,6 +2,7 @@ package model
 
 import (
 	actionModel "github.com/project-eria/eria-core/model/action"
+	eventModel "github.com/project-eria/eria-core/model/event"
 	propertyModel "github.com/project-eria/eria-core/model/property"
 )
 
@@ -43,6 +44,18 @@ var Models = map[string]Model{
 	"Trigger": {
 		Properties: map[string]ModelProperty{
 			"triggered": {DefaultValue: false, Meta: propertyModel.Triggered},
+		},
+	},
+	"Camera": {
+		Properties: map[string]ModelProperty{
+			"latest":     {Meta: propertyModel.Latest},
+			"latestMain": {Meta: propertyModel.LatestMain},
+		},
+		Actions: map[string]ModelAction{
+			"snapshot": {Meta: actionModel.Snapshot},
+		},
+		Events: map[string]ModelEvent{
+			"alarm": {Meta: eventModel.Alarm},
 		},
 	},
 	"GarageDoor": {
